@@ -10,6 +10,8 @@ import { ReviewModule } from './review/review.module';
 import { AuthModule } from './auth/auth.module';
 import { PaymentsModule } from './payments/payments.module';
 
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -20,6 +22,7 @@ import { PaymentsModule } from './payments/payments.module';
     ReviewModule,
     AuthModule,
     PaymentsModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -5,7 +5,7 @@ import { ImageService } from './image.service';
 import { PropertyController } from './property.controller';
 import { Property, PropertySchema } from './entities/property.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { configureCloudinary } from '../cloudinaryConfig';
+import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Asegúrate de importar el CloudinaryService
 
 @Module({
   imports: [
@@ -16,17 +16,10 @@ import { configureCloudinary } from '../cloudinaryConfig';
   ],
   controllers: [PropertyController],
   providers: [
-    PropertyService, 
+    PropertyService,
     ImageService,
-    {
-      provide: 'CLOUDINARY', // Proporciona el cliente de Cloudinary
-      useFactory: (configService: ConfigService) => {
-        return configureCloudinary(configService); // Llama a la función de configuración
-      },
-      inject: [ConfigService], // Inyecta ConfigService para acceder a las variables de entorno
-    },
+    CloudinaryService, // Inyecta directamente el servicio de Cloudinary
   ],
   exports: [PropertyService], // Exporta PropertyService para usarlo en otros módulos
 })
 export class PropertyModule {}
-

@@ -3,7 +3,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 
 export const metadata = {
-  title: "Mi Menu",
+  title: "Mi Perfil",
   description: "configuración de Booked",
 };
 

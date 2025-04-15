@@ -27,6 +27,9 @@ export class User extends Document {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Property' }] })
   properties: Property[];
+
+  @Prop()
+  avatar: string;
   /*
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
   bookings: Booking[];

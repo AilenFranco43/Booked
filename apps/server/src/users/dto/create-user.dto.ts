@@ -35,7 +35,7 @@ export class CreateUserDto {
   })
   @IsDateString()
   @IsOptional()
-  birthDate?: Date;
+  birthDate?: string;
 
   @ApiProperty({
     example: 'Argentina',
@@ -45,4 +45,11 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   nationality?: string;
+
+  @ApiProperty({ example: 'https://res.cloudinary.com/yourcloud/image/upload/v123456/avatar.jpg',
+    description: 'User profile image URL',
+    required: false, })
+  @IsString()
+  @IsOptional()
+  avatar?: string;
 }

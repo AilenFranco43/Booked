@@ -1,8 +1,9 @@
 "use client";
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
-
+import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
@@ -26,7 +27,7 @@ const useFormField = () => {
   const fieldState = getFieldState(fieldContext.name, formState);
 
   if (!fieldContext) {
-    throw new Error("useFormField should be used within <FormField>");
+    throw new Error("useFormField debe usarse dentro de <FormField>");
   }
 
   const { id } = itemContext;
@@ -45,7 +46,6 @@ const FormItemContext = React.createContext({});
 
 const FormItem = React.forwardRef(({ className, ...props }, ref) => {
   const id = React.useId();
-
   return (
     <FormItemContext.Provider value={{ id }}>
       <div ref={ref} className={cn("space-y-2", className)} {...props} />
@@ -56,7 +56,6 @@ FormItem.displayName = "FormItem";
 
 const FormLabel = React.forwardRef(({ className, ...props }, ref) => {
   const { error, formItemId } = useFormField();
-
   return (
     <Label
       ref={ref}
@@ -68,19 +67,13 @@ const FormLabel = React.forwardRef(({ className, ...props }, ref) => {
 });
 FormLabel.displayName = "FormLabel";
 
-const FormControl = React.forwardRef(({ ...props }, ref) => {
-  const { error, formItemId, formDescriptionId, formMessageId } =
-    useFormField();
-
+const FormControl = React.forwardRef((props, ref) => {
+  const { error, formItemId, formDescriptionId, formMessageId } = useFormField();
   return (
     <Slot
       ref={ref}
       id={formItemId}
-      aria-describedby={
-        !error
-          ? `${formDescriptionId}`
-          : `${formDescriptionId} ${formMessageId}`
-      }
+      aria-describedby={!error ? `${formDescriptionId}` : `${formDescriptionId} ${formMessageId}`}
       aria-invalid={!!error}
       {...props}
     />
@@ -90,40 +83,56 @@ FormControl.displayName = "FormControl";
 
 const FormDescription = React.forwardRef(({ className, ...props }, ref) => {
   const { formDescriptionId } = useFormField();
-
-  return (
-    <p
-      ref={ref}
-      id={formDescriptionId}
-      className={cn("text-[0.8rem] text-muted-foreground", className)}
-      {...props}
-    />
-  );
+  return <p ref={ref} id={formDescriptionId} className={cn("text-sm text-muted-foreground", className)} {...props} />;
 });
 FormDescription.displayName = "FormDescription";
 
-const FormMessage = React.forwardRef(
-  ({ className, children, ...props }, ref) => {
-    const { error, formMessageId } = useFormField();
-    const body = error ? String(error?.message) : children;
+const FormMessage = React.forwardRef(({ className, children, ...props }, ref) => {
+  const { error, formMessageId } = useFormField();
+  const body = error ? String(error.message) : children;
+  if (!body) return null;
 
-    if (!body) {
-      return null;
-    }
-
-    return (
-      <p
-        ref={ref}
-        id={formMessageId}
-        className={cn("text-[0.8rem] font-medium text-destructive", className)}
-        {...props}
-      >
-        {body}
-      </p>
-    );
-  }
-);
+  return (
+    <p ref={ref} id={formMessageId} className={cn("text-sm font-medium text-destructive", className)} {...props}>
+      {body}
+    </p>
+  );
+});
 FormMessage.displayName = "FormMessage";
+
+// Subida de imagen a Cloudinary
+const handleImageUpload = async (file) => {
+  try {
+    const timestamp = Math.round(new Date().getTime() / 1000);
+
+    // Paso 1: Obtener la firma desde el backend
+    const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/cloudinary/signature`, {
+      timestamp,
+      folder: 'profile',  // Cambia esto según lo que necesites
+    });
+
+    // Paso 2: Subir imagen a Cloudinary
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
+    formData.append('timestamp', timestamp);
+    formData.append('signature', data.signature);  // Firma obtenida del backend
+    formData.append('folder', 'profile'); // Puedes cambiar 'profile' al nombre que prefieras
+
+    // Subir la imagen
+    const response = await axios.post(
+      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+      formData
+    );
+
+    return response.data.secure_url;
+  } catch (error) {
+    console.error('Error subiendo la imagen:', error);
+    throw error;
+  }
+};
+
+
 
 export {
   useFormField,
@@ -134,4 +143,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+  handleImageUpload,
 };

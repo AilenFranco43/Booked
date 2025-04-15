@@ -162,7 +162,7 @@ export default function RegisterProperty() {
           className="space-y-1 bg-color_form_background rounded-md p-5"
         >
           <FormField
-            control={form.control.title}
+            control={form.control}
             name="title"
             render={({ field }) => (
               <FormItem>

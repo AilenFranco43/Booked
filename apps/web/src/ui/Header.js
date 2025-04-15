@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { REM } from "next/font/google";
-import userImage from "../app/public/Perfil.png";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -20,26 +19,21 @@ const rem = REM({
 });
 
 export const Header = () => {
-
-  const { user, checkAuthStatus, status, logout } = useAuth()
+  const { user, checkAuthStatus, status, logout } = useAuth();
 
   useEffect(() => {
-    const token = window.localStorage.getItem('token')
-
-    checkAuthStatus(token)
-      .catch(() => { })
-  }, [])
-
+    const token = window.localStorage.getItem("token");
+    checkAuthStatus(token).catch(() => {});
+  }, []);
 
   const closeSession = () => {
-    logout()
-    window.localStorage.removeItem('token')
-  }
+    logout();
+    window.localStorage.removeItem("token");
+  };
 
   return (
     <header className="relative w-full h-[110px] top-0 overflow-hidden bg-[#5FA777] px-8 shadow-2xl">
       <div className="flex h-full justify-between items-center pr-10">
-        {/*<Link href={'/'} className='text-5xl font-bold text-white hover:text-opacity-70'>Booked</Link>*/}
         <Link href={"/"} className="flex flex-row ">
           <h1
             className={rem.className}
@@ -89,7 +83,13 @@ export const Header = () => {
         {status === USER_STATE.VERIFIED && (
           <DropdownMenu>
             <DropdownMenuTrigger className="focus:outline-none">
-              <Image src={userImage} alt="Perfil" width={70} height={70} />
+              <Image
+                src={user?.avatar || "/default-profile.png"}
+                alt="Perfil"
+                width={70}
+                height={70}
+                className="rounded-full object-cover"
+              />
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="bg-[#5FA777] w-[180px]">
@@ -103,27 +103,30 @@ export const Header = () => {
               </DropdownMenuItem>
 
               <DropdownMenuItem className="text-white flex justify-center">
-                <Link
-                  onClick={closeSession}
-                  href={"/"}
-                >
+                <Link onClick={closeSession} href={"/"}>
                   Cerrar sesión
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
         )}
 
-        {
-          status === USER_STATE.UNVERIFIED && (
-            <div className="w-1/8 flex gap-7">
-            <Link href={"/auth/login"} className="px-5 py-2 bg-white text-[#5FA777] rounded-xl">Login</Link>
-            <Link href={"/auth/register"} className="px-5 py-2 bg-white text-[#5FA777] rounded-xl">Register</Link>
+        {status === USER_STATE.UNVERIFIED && (
+          <div className="w-1/8 flex gap-7">
+            <Link
+              href={"/auth/login"}
+              className="px-5 py-2 bg-white text-[#5FA777] rounded-xl"
+            >
+              Login
+            </Link>
+            <Link
+              href={"/auth/register"}
+              className="px-5 py-2 bg-white text-[#5FA777] rounded-xl"
+            >
+              Register
+            </Link>
           </div>
-          )
-        }
-
+        )}
       </div>
     </header>
   );

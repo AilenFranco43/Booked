@@ -1,8 +1,13 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import axios from "axios";
+import { useBoundStore } from "@/store/bound.store";
+import { getToken } from "../../api/token";
+
 import {
   Form,
   FormControl,
@@ -11,161 +16,175 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  handleImageUpload,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Title } from "@/components/title-menu";
-import userImage from '@/app/public/Perfil.png'
+import userImage from "@/app/public/Perfil.png";
+import { useState } from "react";
 
+// Validación con Zod
 const formSchema = z.object({
-  username: z
+  name: z
     .string()
     .min(5, {
-      message: "el nombre y apellido debe tener mas de 10 characters.",
+      message: "El nombre y apellido debe tener más de 5 caracteres.",
     })
     .max(50),
-  birthDate: z.string(),
-  email: z.string(),
-  nationality: z.string(),
+  email: z.string().email({ message: "Debe ser un email válido." }),
+  birthDate: z.string().min(1, { message: "La fecha de nacimiento es obligatoria." }),
+  nationality: z.string().min(1, { message: "La nacionalidad es obligatoria." }),
+  avatar: z.string().optional(),
 });
 
 export default function Profile() {
+  const [avatarUrl, setAvatarUrl] = useState(userImage.src); // Imagen por defecto
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const user = useBoundStore((state) => state.user);
+  const userId = user?.id || user?._id;
+  const token = getToken();
+
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      username: "",
-      birthDate: new Date(),
+      name: "",
+      birthDate: new Date().toISOString().split("T")[0],
       email: "",
       nationality: "",
+      avatar: "",
     },
   });
 
-  function onSubmit(values, event) {
-    event.preventDefault();
-    console.log(values);
-    const validationResult = formSchema.safeParse(values);
-    if (!validationResult.success) {
-      console.log(values);
-      console.error(validationResult.error);
-    } else {
-      console.log(values);
-      console.log("Form submitted successfully!", validationResult.data);
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = await handleImageUpload(file);
+      if (url) {
+        form.setValue("avatar", url);
+        setAvatarUrl(url);
+      }
     }
   }
+
+  async function onSubmit(values) {
+    setIsSubmitting(true);
+    try {
+      console.log("Valores enviados al backend:", values);
+
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_URL}/users/patch/${userId}`,
+        values,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log("Usuario actualizado:", response.data);
+      // Mensaje de éxito o navegación
+    } catch (error) {
+      console.error("Error actualizando usuario:", error);
+      if (error.response?.data) {
+        console.error("🛑 Detalles del error del backend:", error.response.data);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="w-full">
-      <Title
-        title="Mi Perfil"
-        description="Completa o edita tu informacion personal"
-      />
+      <Title title="Mi Perfil" description="Completa o edita tu información personal" />
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-1 bg-color_form_background rounded-md p-5"
-        >
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-color_form_background rounded-md p-5">
           <FormField
-            control={form.control.username}
-            name="username"
+            control={form.control}
+            name="name"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Nombre Completo</FormLabel>
                 <FormControl>
-                  <Input
-                    className="bg-white"
-                    placeholder="Nombres y Apellido"
-                    {...field}
-                  />
+                  <Input className="bg-white" placeholder="Nombres y Apellido" {...field} />
                 </FormControl>
-                <FormDescription>
-                  Ingresa tu nombre tal como figura en el documento de identidad
-                  de tu país.
-                </FormDescription>
+                <FormDescription>Ingresa tu nombre tal como figura en el documento de identidad.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
-            control={form.control.birthDate}
+            control={form.control}
             name="birthDate"
             render={({ field }) => (
-              <FormItem className="space-y-2">
+              <FormItem>
                 <FormLabel>Fecha de nacimiento</FormLabel>
                 <FormControl>
                   <Input className="bg-white" type="date" {...field} />
                 </FormControl>
-                <FormDescription>
-                  La fecha de nacimiento es usada para comprobar tu edad.
-                </FormDescription>
+                <FormDescription>La fecha de nacimiento es usada para comprobar tu edad.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <FormField
-            control={form.control.email}
+            control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
-                    className="bg-white"
-                    type="email"
-                    placeholder="Ingresa tu email"
-                    {...field}
-                  />
+                  <Input className="bg-white" type="email" placeholder="Ingresa tu email" {...field} />
                 </FormControl>
-                <FormDescription>
-                  Este es tu email predeterminado, nos contactaremos contigo por
-                  este medio.
-                </FormDescription>
+                <FormDescription>Este es tu email predeterminado.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+<FormField
+  control={form.control}
+  name="nationality"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Nacionalidad</FormLabel>
+      <FormControl>
+        <Input className="bg-white" placeholder="Ingrese su nacionalidad" {...field} />
+      </FormControl>
+      <FormDescription>Escribe tu nacionalidad actual.</FormDescription>
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
+
           <FormField
-            control={form.control.nationality}
-            name="nationality"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nacionalidad</FormLabel>
-                <FormControl>
-                  <Input
-                    className="bg-white"
-                    placeholder="Ingrese su nacionalidad"
-                    {...field}
-                  />
-                </FormControl>
-                <FormDescription>
-                  La que figura en tu documento de identidad.
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control.avatar}
+            control={form.control}
             name="avatar"
             render={() => (
               <FormItem>
-                <FormLabel>Agregar o editar foto de perfil</FormLabel>
-                <FormDescription>
-                  Puedes subir una foto de hasta XXmb, en formato .jpg o .png.
-                </FormDescription>
+                <FormLabel>Foto de perfil</FormLabel>
+                <FormDescription>Puedes subir una foto de hasta 2MB, en formato .jpg o .png.</FormDescription>
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={userImage} />
-                  <AvatarFallback>Booked</AvatarFallback>
+                  <AvatarImage src={avatarUrl} />
+                  <AvatarFallback>Foto</AvatarFallback>
                 </Avatar>
                 <FormControl>
-                  <Input type="file" accept="image/png, image/jpeg" />
+                  <Input type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
                 </FormControl>
               </FormItem>
             )}
           />
-          <div className="flex justify-end w-[90%]">
-            <Button className="bg-[#318F51] text-white mt-5" type="submit">
-              Actualizar
+
+          <div className="flex justify-end w-full">
+            <Button className="bg-[#318F51] text-white mt-5" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Actualizando..." : "Actualizar"}
             </Button>
           </div>
+          
         </form>
       </Form>
     </div>

@@ -24,7 +24,7 @@ export class UsersService {
   async create(
     createUserDto: CreateUserDto,
   ): Promise<{ user: User; token: string }> {
-    const { name, email, password, mobileNumber, birthDate, nationality } =
+    const { name, email, password, mobileNumber, birthDate, nationality, avatar } =
       createUserDto;
     const emailToLowerCase = email.toLowerCase();
     const existingUser = await this.userModel.findOne({
@@ -43,6 +43,7 @@ export class UsersService {
       mobileNumber,
       birthDate,
       nationality,
+      avatar,
     });
 
     const token = this.generateJwt({ id: newUser.id });
@@ -101,6 +102,7 @@ export class UsersService {
         mobileNumber: user.mobileNumber,
         birthDate: user.birthDate,
         nationality: user.nationality,
+        avatar: user.avatar,
       },
       token,
     };

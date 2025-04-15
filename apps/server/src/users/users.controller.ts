@@ -59,6 +59,8 @@ export class UsersController {
   @Patch('patch/:id')
   @UseGuards(AuthGuard('jwt'))
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+
+    console.log('Body recibido:', updateUserDto); 
     if (updateUserDto.password) {
       updateUserDto.password = bcrypt.hashSync(updateUserDto.password, 10);
     }

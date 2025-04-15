@@ -16,6 +16,7 @@ export const USER_STATE = {
 export const createAuthSlice = (set) => ({
   status: USER_STATE.CHECKING,
   user: null,
+  setUser: (user) => set({ user }), // ✅ Agregamos setUser
 
   login: (user) => {
     set({ user, status: USER_STATE.VERIFIED })
@@ -26,4 +27,7 @@ export const createAuthSlice = (set) => ({
   },
 
   checking: () => set({ status: USER_STATE.CHECKING })
+
+
+  
 });

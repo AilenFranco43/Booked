@@ -8,10 +8,10 @@ export class AuthService {
   constructor(private readonly jwtService: JwtService) { }
 
   checkAuthStatus(user: User) {
-    const { name, email, id, mobileNumber, birthDate, nationality } = user;
+    const { name, email, id, mobileNumber, birthDate, nationality, avatar } = user;
 
     return {
-      user: { id, name, email, mobileNumber, birthDate, nationality },
+      user: { id, name, email, mobileNumber, birthDate, nationality, avatar },
       token: this.generateJwt({ id: user.id }),
     };
   }
