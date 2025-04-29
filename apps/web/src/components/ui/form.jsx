@@ -3,7 +3,6 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { Controller, FormProvider, useFormContext } from "react-hook-form";
-import axios from "axios";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
@@ -100,39 +99,6 @@ const FormMessage = React.forwardRef(({ className, children, ...props }, ref) =>
 });
 FormMessage.displayName = "FormMessage";
 
-// Subida de imagen a Cloudinary
-const handleImageUpload = async (file) => {
-  try {
-    const timestamp = Math.round(new Date().getTime() / 1000);
-
-    // Paso 1: Obtener la firma desde el backend
-    const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/cloudinary/signature`, {
-      timestamp,
-      folder: 'profile',  // Cambia esto según lo que necesites
-    });
-
-    // Paso 2: Subir imagen a Cloudinary
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('api_key', process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY);
-    formData.append('timestamp', timestamp);
-    formData.append('signature', data.signature);  // Firma obtenida del backend
-    formData.append('folder', 'profile'); // Puedes cambiar 'profile' al nombre que prefieras
-
-    // Subir la imagen
-    const response = await axios.post(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-      formData
-    );
-
-    return response.data.secure_url;
-  } catch (error) {
-    console.error('Error subiendo la imagen:', error);
-    throw error;
-  }
-};
-
-
 
 export {
   useFormField,
@@ -143,5 +109,5 @@ export {
   FormDescription,
   FormMessage,
   FormField,
-  handleImageUpload,
+
 };

@@ -1,4 +1,5 @@
 "use client";
+
 import { Title } from "@/components/title-menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -26,127 +27,123 @@ import { Textarea } from "@/components/ui/textarea";
 import { useState } from "react";
 import { AlertPopup } from "@/components/Alert";
 import { newProperty } from "@/app/api/callApi";
-import { CldUploadWidget } from "next-cloudinary";
 import Autocomplete from "@/components/ui/Autocomplete";
+import { ImageUploader } from "@/components/ImageUploader";
 
 const tags = [
-  {
-    id: "beachfront",
-    label: "Playa en frente",
-  },
-  {
-    id: "wifi",
-    label: "Wifi",
-  },
-  {
-    id: "pets allowed",
-    label: "Se permiten mascotas",
-  },
-  {
-    id: "pool",
-    label: "Piscina",
-  },
-  {
-    id: "with furniture",
-    label: "Amueblada",
-  },
-  {
-    id: "Smoking is allowed",
-    label: "Se permite fumar",
-  },
-  {
-    id: "private parking",
-    label: "Estacionamiento Privado",
-  },
-  {
-    id: "workspace",
-    label: "Espacio de trabajo",
-  },
+  { id: "beachfront", label: "Playa en frente" },
+  { id: "wifi", label: "Wifi" },
+  { id: "pets allowed", label: "Se permiten mascotas" },
+  { id: "pool", label: "Piscina" },
+  { id: "with furniture", label: "Amueblada" },
+  { id: "Smoking is allowed", label: "Se permite fumar" },
+  { id: "private parking", label: "Estacionamiento Privado" },
+  { id: "workspace", label: "Espacio de trabajo" },
 ];
 
-const fileSchema = z
-  .instanceof(File)
-  .refine((file) => ["image/jpeg", "image/png"].includes(file.type), {
-    message: "El archivo debe ser un JPEG o PNG",
-  });
-
 const formSchema = z.object({
-  title: z.string().min(4, {
-    message: "Selecciona una opcion",
+  title: z.enum(["casa", "departamento", "habitacion"], {
+    errorMap: () => ({ message: "Selecciona un tipo de inmueble válido" }),
   }),
   description: z
     .string()
-    .min(10, { message: "muy corta la descripcion" })
-    .max(300, { message: "no debe superar los 300 caracteres" }),
-  price: z.string(),
-  max_people: z.string(),
+    .min(10, { message: "La descripción debe tener al menos 10 caracteres" }),
+  price: z.number().positive("El precio debe ser mayor que 0"),
+  max_people: z
+    .number()
+    .int()
+    .positive("El número de personas debe ser mayor que 0"),
   tags: z.array(z.string()).refine((value) => value.some((item) => item), {
-    message: "selecciona al menos un item",
+    message: "Selecciona al menos un ítem",
   }),
-  pais: z.string().optional(),
-  provincia: z.string().optional(),
-  ciudad: z.string().optional(),
-  calle: z.string().optional(),
-  photos: z.array(fileSchema).optional(),
+  address: z.string(),
+  coordinates: z.object({
+    latitude: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .refine((val) => !isNaN(val), {
+        message: "Latitud debe ser un número válido",
+      }),
+    longitude: z
+      .union([z.number(), z.string().transform((val) => parseFloat(val))])
+      .refine((val) => !isNaN(val), {
+        message: "Longitud debe ser un número válido",
+      }),
+  }),
+  photos: z.array(z.string().url()).min(1, "Debes subir al menos una foto"),
 });
 
 export default function RegisterProperty() {
-  const [resource, setResource] = useState();
-  const [files, setFiles] = useState([]);
   const [alert, setAlert] = useState({ show: false, message: "", type: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
-      price: "0",
-      max_people: "1",
+      description: "",
+
+      price: 0,
+      max_people: 1,
       tags: ["wifi"],
-      pais: "",
-      provincia: "",
-      ciudad: "",
-      calle: "",
+      address: "",
+      coordinates: { latitude: 0, longitude: 0 },
       photos: [],
     },
   });
 
-  /*const handleInputChange = (event) => {
-    event.preventDefault();
-    let filesInput = Array.from(event.target.files);
-    setFiles(filesInput);
-    form.setValue("photos", filesInput);
-  };*/
+  const onSubmit = async (values) => {
+    setIsSubmitting(true);
+    try {
+      const dataToSend = {
+        ...values,
+        price: Number(values.price),
+        max_people: Number(values.max_people),
+        coordinates: {
+          latitude: Number(values.coordinates.latitude),
+          longitude: Number(values.coordinates.longitude),
+        },
+      };
 
-  function onSubmit(values, event) {
-    event.preventDefault();
-    //valido los datos ingresado con safeParse y me dice si se cargo correctamente
-    const validationResult = formSchema.safeParse(values);
-    if (!validationResult.success) {
-      console.log(values);
-      console.error(validationResult.error);
+      const response = await newProperty(dataToSend);
+
+      if (response.type === "success") {
+        // Resetear el formulario completamente
+        form.reset({
+          title: "",
+          description: "",
+          price: 0,
+          max_people: 1,
+          tags: ["wifi"],
+          address: "",
+          coordinates: { latitude: 0, longitude: 0 },
+          photos: []
+        });
+      }
+
+      setAlert(response);
+    } catch (error) {
       setAlert({
         show: true,
-        message: "error al validar los datos",
+        message: "Error al comunicarse con el servidor",
         type: "error",
       });
-    } else {
-      console.log(values);
-      console.log("Form submitted successfully!", validationResult.data);
-      const response = newProperty(values);
-      response.then((result) => {
-        //console.log('Resultado:', result);
-        if (result.message === "Registro exitoso") {
-          setAlert(result);
-          //setTimeout(() => router.push("/auth/login"), 10000);
-        }
-        setAlert(result);
-      });
+    } finally {
+      setIsSubmitting(false);
     }
-    setTimeout(() => setAlert({ show: false, message: "", type: "" }), 10000);
-  }
+  };
 
   const handleSelect = (location) => {
-    console.log(`Latitud: ${location.lat}, Longitud: ${location.lon}`);
+    const latitud = location.latitud;
+    const longitud = location.longitud;
+
+    if (latitud && longitud) {
+      form.setValue("coordinates", { latitude: latitud, longitude: longitud });
+    }
+
+    form.setValue(
+      "address",
+      `${location.calle}, ${location.ciudad || "Ciudad no disponible"}, ${location.provincia || "Provincia no disponible"}, ${location.pais}`
+    );
   };
 
   return (
@@ -156,11 +153,13 @@ export default function RegisterProperty() {
         description="Agrega, edita o elimina tus publicaciones."
       />
       {alert.show && <AlertPopup message={alert.message} type={alert.type} />}
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-1 bg-color_form_background rounded-md p-5"
         >
+          {/* Tipo de Inmueble */}
           <FormField
             control={form.control}
             name="title"
@@ -173,41 +172,45 @@ export default function RegisterProperty() {
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Elegir" {...field} />
+                      <SelectValue placeholder="Elegir" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="casa">casa</SelectItem>
-                    <SelectItem value="departamento">departamento</SelectItem>
-                    <SelectItem value="habitacion">habitacion</SelectItem>
+                    <SelectItem value="casa">Casa</SelectItem>
+                    <SelectItem value="departamento">Departamento</SelectItem>
+                    <SelectItem value="habitacion">Habitación</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {/* Descripción */}
           <FormField
-            control={form.control.description}
+            control={form.control}
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Descripcion</FormLabel>
+                <FormLabel>Descripción</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Ingrese una breve descripcion de la casa"
+                    placeholder="Ingrese una breve descripción de la propiedad"
                     className="bg-white"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Breve descripcion que capte la atención.
+                  Breve descripción que capte la atención.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {/* Precio */}
           <FormField
-            control={form.control.price}
+            control={form.control}
             name="price"
             render={({ field }) => (
               <FormItem>
@@ -217,20 +220,22 @@ export default function RegisterProperty() {
                     className="bg-white"
                     type="text"
                     pattern="\d*"
-                    minLength="1"
-                    maxLength="10"
-                    title="Por favor, ingresa solo números enteros."
                     placeholder="Ingrese el precio del alquiler"
                     {...field}
+                    onChange={(e) =>
+                      field.onChange(parseFloat(e.target.value) || 0)
+                    }
                   />
                 </FormControl>
-                <FormDescription>Precio del alquiler por dia</FormDescription>
+                <FormDescription>Precio del alquiler por día</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
+
+          {/* Personas */}
           <FormField
-            control={form.control.max_people}
+            control={form.control}
             name="max_people"
             render={({ field }) => (
               <FormItem>
@@ -240,11 +245,11 @@ export default function RegisterProperty() {
                     className="bg-white"
                     type="text"
                     pattern="^[1-9][0-9]{0,2}$"
-                    minLength="1"
-                    maxLength="3"
-                    title="Por favor, ingresa solo números enteros desde el 1"
-                    placeholder="Ingrese las personar admitidas"
+                    placeholder="Ingrese las personas admitidas"
                     {...field}
+                    onChange={(e) =>
+                      field.onChange(parseInt(e.target.value, 10) || 1)
+                    }
                   />
                 </FormControl>
                 <FormDescription>
@@ -254,49 +259,44 @@ export default function RegisterProperty() {
               </FormItem>
             )}
           />
+
+          {/* Tags */}
           <FormField
-            control={form.control.tags}
+            control={form.control}
             name="tags"
             render={() => (
               <FormItem>
-                <div className="mb-4">
-                  <FormLabel>Detalles</FormLabel>
-                  <FormDescription>
-                    Seleciona uno o varios items que detallen tu propiedad.
-                  </FormDescription>
-                </div>
+                <FormLabel>Detalles</FormLabel>
+                <FormDescription>
+                  Selecciona uno o varios ítems que detallen tu propiedad.
+                </FormDescription>
                 <div className="flex flex-row flex-wrap">
                   {tags.map((tag) => (
                     <FormField
                       key={tag.id}
-                      control={form.control.tags}
+                      control={form.control}
                       name="tags"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={tag.id}
-                            className="flex flex-row items-start space-x-3 space-y-0 m-1"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(tag.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...field.value, tag.id])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== tag.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal">
-                              {tag.label}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 m-1">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(tag.id)}
+                              onCheckedChange={(checked) =>
+                                checked
+                                  ? field.onChange([...field.value, tag.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== tag.id
+                                      )
+                                    )
+                              }
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {tag.label}
+                          </FormLabel>
+                        </FormItem>
+                      )}
                     />
                   ))}
                 </div>
@@ -304,10 +304,12 @@ export default function RegisterProperty() {
               </FormItem>
             )}
           />
+
+          {/* Dirección (Autocompletado) */}
           <FormField
             control={form.control}
             name="address"
-            render={({ field }) => (
+            render={() => (
               <FormItem>
                 <FormLabel>Dirección (autocompletado)</FormLabel>
                 <FormControl>
@@ -316,112 +318,38 @@ export default function RegisterProperty() {
               </FormItem>
             )}
           />
-          {/* <FormField
-            control={form.control.pais}
-            name="pais"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Dirreccion</FormLabel>
-                <FormControl>
-                  <Input className="bg-white" placeholder="País" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
+
+          {/* Sección para subir fotos de la propiedad */}
           <FormField
-            control={form.control.pais}
-            name="provincia"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    className="bg-white"
-                    placeholder="Provincia"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control.ciudad}
-            name="ciudad"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input className="bg-white" placeholder="Ciudad" {...field} />
-                </FormControl>
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control.calle}
-            name="calle"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    className="bg-white"
-                    placeholder="Dirección (calle y numeración)"
-                    {...field}
-                  />
-                </FormControl>
-              </FormItem>
-            )}
-          /> */}
-          {/*<FormField
             control={form.control}
             name="photos"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
-                <FormLabel>Agregar fotos de la propiedad</FormLabel>
+                <FormLabel>Fotos de la propiedad</FormLabel>
                 <FormDescription>
-                  Puedes subir hasta 20 archivos formato imagen .jpg o .png.
+                  Sube hasta 5 imágenes (JPEG/PNG, máx. 5MB cada una)
                 </FormDescription>
                 <FormControl>
-                  <Input
-                    type="file"
-                    multiple
-                    accept="image/png, image/jpeg"
-                    onChange={handleInputChange}
+                  <ImageUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                    mode="multiple"
+                    maxFiles={5}
                   />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
-          />*/}
-          <FormLabel>Agregar fotos de la propiedad</FormLabel>
-          <FormDescription>
-            Puedes subir hasta 20 archivos formato imagen .jpg o .png.
-          </FormDescription>
-          <CldUploadWidget
-            signatureEndpoint="/api/cloudinary"
-            onSuccess={(result, { widget }) => {
-              setResource(result?.info);
-              setFiles(...files, result.info.url);
-              console.log(files);
-            }}
-            onQueuesEnd={(result, { widget }) => {
-              widget.close();
-            }}
-          >
-            {({ open }) => {
-              return (
-                <button
-                  className="bg-color_form_button text-white mt-5 rounded-md py-2 px-4"
-                  onClick={() => open()}
-                >
-                  Agregar fotos
-                </button>
-              );
-            }}
-          </CldUploadWidget>
+          />
+
+          {/* Botón de enviar */}
           <div className="flex justify-end w-[90%]">
             <Button
               className="bg-color_form_button text-white mt-5"
               type="submit"
+              disabled={isSubmitting}
             >
-              Cargar propiedad
+              {isSubmitting ? "Registrando..." : "Registrar propiedad"}
             </Button>
           </div>
         </form>

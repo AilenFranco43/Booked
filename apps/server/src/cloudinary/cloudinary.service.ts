@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { v2 as cloudinary } from 'cloudinary';
 import * as dotenv from 'dotenv';
 
-dotenv.config(); // Asegura que las variables de entorno sean cargadas
+dotenv.config();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -20,8 +20,8 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       const uploadStream = this.uploader.upload_stream(
         {
-          public_id, // Usa el mismo public_id para reemplazar la imagen
-          overwrite: true, // Asegúrate de que se reemplace
+          public_id,
+          overwrite: true,
         },
         (error, result) => {
           if (error) {

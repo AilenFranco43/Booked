@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 const Autocomplete = ({ onSelect }) => {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const apiKey = "pk.c0135e6c06380875c83b409f4324b14d"; // Coloca tu API key de LocationIQ
+  const apiKey = process.env.NEXT_PUBLIC_LOCATION_API_KEY;
 
   useEffect(() => {
     if (query.length > 2) {
@@ -30,10 +30,21 @@ const Autocomplete = ({ onSelect }) => {
 
   const handleSelect = (suggestion) => {
     setQuery(suggestion.display_name);
-    onSelect(suggestion); // Llamada al evento onSelect para pasar la ubicación
+    const { address, lat, lon } = suggestion;
+  
+    const locationData = {
+      calle: address.road || "",
+      ciudad: address.city || address.town || address.village || "",
+      provincia: address.state || "",
+      pais: address.country || "",
+      latitud: lat,
+      longitud: lon,
+    };
+  
+    onSelect(locationData); // Pasás esos datos al componente padre
     setSuggestions([]);
   };
-
+  
   return (
     <div className="relative">
       <input

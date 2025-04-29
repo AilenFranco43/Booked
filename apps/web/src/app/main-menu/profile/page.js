@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import { useBoundStore } from "@/store/bound.store";
 import { getToken } from "../../api/token";
+import { ImageUploader } from "@/components/ImageUploader";
 
 import {
   Form,
@@ -19,7 +20,6 @@ import {
   handleImageUpload,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Title } from "@/components/title-menu";
 import userImage from "@/app/public/Perfil.png";
 import { useState } from "react";
@@ -33,8 +33,12 @@ const formSchema = z.object({
     })
     .max(50),
   email: z.string().email({ message: "Debe ser un email válido." }),
-  birthDate: z.string().min(1, { message: "La fecha de nacimiento es obligatoria." }),
-  nationality: z.string().min(1, { message: "La nacionalidad es obligatoria." }),
+  birthDate: z
+    .string()
+    .min(1, { message: "La fecha de nacimiento es obligatoria." }),
+  nationality: z
+    .string()
+    .min(1, { message: "La nacionalidad es obligatoria." }),
   avatar: z.string().optional(),
 });
 
@@ -84,11 +88,13 @@ export default function Profile() {
       );
 
       console.log("Usuario actualizado:", response.data);
-      // Mensaje de éxito o navegación
     } catch (error) {
       console.error("Error actualizando usuario:", error);
       if (error.response?.data) {
-        console.error("🛑 Detalles del error del backend:", error.response.data);
+        console.error(
+          "🛑 Detalles del error del backend:",
+          error.response.data
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -97,9 +103,15 @@ export default function Profile() {
 
   return (
     <div className="w-full">
-      <Title title="Mi Perfil" description="Completa o edita tu información personal" />
+      <Title
+        title="Mi Perfil"
+        description="Completa o edita tu información personal"
+      />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 bg-color_form_background rounded-md p-5">
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-4 bg-color_form_background rounded-md p-5"
+        >
           <FormField
             control={form.control}
             name="name"
@@ -107,9 +119,16 @@ export default function Profile() {
               <FormItem>
                 <FormLabel>Nombre Completo</FormLabel>
                 <FormControl>
-                  <Input className="bg-white" placeholder="Nombres y Apellido" {...field} />
+                  <Input
+                    className="bg-white"
+                    placeholder="Nombres y Apellido"
+                    {...field}
+                  />
                 </FormControl>
-                <FormDescription>Ingresa tu nombre tal como figura en el documento de identidad.</FormDescription>
+                <FormDescription>
+                  Ingresa tu nombre tal como figura en el documento de
+                  identidad.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -124,7 +143,9 @@ export default function Profile() {
                 <FormControl>
                   <Input className="bg-white" type="date" {...field} />
                 </FormControl>
-                <FormDescription>La fecha de nacimiento es usada para comprobar tu edad.</FormDescription>
+                <FormDescription>
+                  La fecha de nacimiento es usada para comprobar tu edad.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -137,54 +158,71 @@ export default function Profile() {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input className="bg-white" type="email" placeholder="Ingresa tu email" {...field} />
+                  <Input
+                    className="bg-white"
+                    type="email"
+                    placeholder="Ingresa tu email"
+                    {...field}
+                  />
                 </FormControl>
-                <FormDescription>Este es tu email predeterminado.</FormDescription>
+                <FormDescription>
+                  Este es tu email predeterminado.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-<FormField
-  control={form.control}
-  name="nationality"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Nacionalidad</FormLabel>
-      <FormControl>
-        <Input className="bg-white" placeholder="Ingrese su nacionalidad" {...field} />
-      </FormControl>
-      <FormDescription>Escribe tu nacionalidad actual.</FormDescription>
-      <FormMessage />
-    </FormItem>
-  )}
-/>
-
-
+          <FormField
+            control={form.control}
+            name="nationality"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nacionalidad</FormLabel>
+                <FormControl>
+                  <Input
+                    className="bg-white"
+                    placeholder="Ingrese su nacionalidad"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Escribe tu nacionalidad actual.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="avatar"
-            render={() => (
+            render={({ field }) => (
               <FormItem>
                 <FormLabel>Foto de perfil</FormLabel>
-                <FormDescription>Puedes subir una foto de hasta 2MB, en formato .jpg o .png.</FormDescription>
-                <Avatar className="w-16 h-16">
-                  <AvatarImage src={avatarUrl} />
-                  <AvatarFallback>Foto</AvatarFallback>
-                </Avatar>
+                <FormDescription>
+                  Sube una imagen JPEG/PNG (máx. 2MB)
+                </FormDescription>
                 <FormControl>
-                  <Input type="file" accept="image/png, image/jpeg" onChange={handleFileChange} />
+                  <ImageUploader
+                    value={field.value}
+                    onChange={field.onChange}
+                    mode="profile"
+                  />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
 
           <div className="flex justify-end w-full">
-            <Button className="bg-[#318F51] text-white mt-5" type="submit" disabled={isSubmitting}>
+            <Button
+              className="bg-[#318F51] text-white mt-5"
+              type="submit"
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Actualizando..." : "Actualizar"}
             </Button>
           </div>
-          
         </form>
       </Form>
     </div>
