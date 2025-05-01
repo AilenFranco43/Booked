@@ -25,11 +25,11 @@ const PropertyDetail = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  
+
   // Estado para fechas
   const [dateRange, setDateRange] = useState({
     startDate: null,
-    endDate: null
+    endDate: null,
   });
   const { startDate, endDate } = dateRange;
 
@@ -48,7 +48,7 @@ const PropertyDetail = () => {
   useEffect(() => {
     if (startDate && endDate) {
       const totalDays = countDaysBetweenDates(startDate, endDate);
-      const total = (Number(currentProperty?.price) * totalDays);
+      const total = Number(currentProperty?.price) * totalDays;
       setTotalPrice(total);
     } else {
       setTotalPrice(0);
@@ -123,7 +123,7 @@ const PropertyDetail = () => {
                   const [start, end] = update;
                   setDateRange({
                     startDate: start,
-                    endDate: end
+                    endDate: end,
                   });
                 }}
                 minDate={new Date()}
@@ -136,7 +136,8 @@ const PropertyDetail = () => {
               />
               {startDate && endDate && (
                 <p className="text-sm text-gray-600">
-                  {countDaysBetweenDates(startDate, endDate)} noches seleccionadas
+                  {countDaysBetweenDates(startDate, endDate)} noches
+                  seleccionadas
                 </p>
               )}
             </div>
@@ -150,7 +151,9 @@ const PropertyDetail = () => {
                 min={1}
                 max={20}
                 className="w-full accent-[#318F51]"
-                onChange={(data) => setSelectedPeopleQuantity(data.target.value)}
+                onChange={(data) =>
+                  setSelectedPeopleQuantity(data.target.value)
+                }
                 value={selectedPeopleQuantity}
               />
             </div>
@@ -163,19 +166,21 @@ const PropertyDetail = () => {
             >
               Reservar
             </button>
-            
+
             {/* Total */}
             <div className="text-center">
               <strong>Total: ${totalPrice.toFixed(2)}</strong>
               {startDate && endDate && (
                 <p className="text-sm text-gray-600">
-                  {countDaysBetweenDates(startDate, endDate)} noches × ${currentProperty?.price}
+                  {countDaysBetweenDates(startDate, endDate)} noches × $
+                  {currentProperty?.price}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Sección de imágenes */}
+          {/* Sección de imágenes y descripción*/}
+
           <div className="space-y-8 size-[1200px] h-full">
             <div className="p-4 grid grid-cols-8 gap-2 bg-[#5FA77738] rounded-xl max-w-4xl mx-auto">
               {currentProperty.photos?.length > 0 ? (
@@ -199,7 +204,8 @@ const PropertyDetail = () => {
                       src={photo}
                       alt={`Imagen ${index + 1} de ${currentProperty.title}`}
                       onClick={() => {
-                        const clickedIndex = currentProperty.photos.indexOf(photo);
+                        const clickedIndex =
+                          currentProperty.photos.indexOf(photo);
                         setCurrentImageIndex(clickedIndex);
                         setSelectedImage(photo);
                         setIsModalOpen(true);
@@ -212,6 +218,10 @@ const PropertyDetail = () => {
                   No hay imágenes disponibles
                 </p>
               )}
+
+              <div className="col-span-8 pt-4">
+                <h2>{currentProperty.description}</h2>
+              </div>
             </div>
 
             {/* Modal para imágenes */}
@@ -220,7 +230,9 @@ const PropertyDetail = () => {
                 <button
                   onClick={() => {
                     setCurrentImageIndex(
-                      (prev) => (prev - 1 + currentProperty.photos.length) % currentProperty.photos.length
+                      (prev) =>
+                        (prev - 1 + currentProperty.photos.length) %
+                        currentProperty.photos.length
                     );
                     setSelectedImage(currentProperty.photos[currentImageIndex]);
                   }}
@@ -282,7 +294,10 @@ const PropertyDetail = () => {
               <h3 className="font-bold text-xl px-10 text-slate-700">
                 Acá es donde vas a estar
               </h3>
-              <Map latitude={currentProperty.coordinates?.latitude} longitude={currentProperty.coordinates?.longitude} />
+              <Map
+                latitude={currentProperty.coordinates?.latitude}
+                longitude={currentProperty.coordinates?.longitude}
+              />
             </div>
 
             <h3 className="font-bold text-xl px-10 text-slate-700 py-10">

@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
-
+import { useEffect, useMemo } from 'react'
 import { GridProperties } from '../components/GridProperties'
 import { useProperties } from '../hooks/useProperties'
 import { Banner } from '../ui/Banner'
@@ -12,38 +11,65 @@ import mendozaImage from './public/mendoza.png'
 import buenoAiresImage from './public/buenosaires.png'
 import Image from 'next/image'
 
-
 const TOP_SEARCH = [
   {
-    href: marDePlataImage,
-    title: 'Mar de Plata',
-    subTitle: '28 Alojamientos'
-  },
-  {
-    href: saltaImage,
-    title: 'Salta',
-    subTitle: '28 Alojamientos'
-  },
-  {
-    href: mendozaImage,
-    title: 'Mendoza',
-    subTitle: '28 Alojamientos'
-  },
-  {
-    href: buenoAiresImage,
     title: 'Buenos Aires',
-    subTitle: '28 Alojamientos'
+    href: buenoAiresImage,
+  },
+  {
+    title: 'Mar del Plata',
+    href: marDePlataImage,
+  },
+  {
+    title: 'Salta',
+    href: saltaImage,
+  },
+  {
+    title: 'Mendoza',
+    href: mendozaImage,
   }
 ]
 
-const Page = () => {
+const extractCityFromAddress = (address) => {
+  if (!address) return 'Ciudad no disponible'
+  
 
+  const parts = address.split(',')
+  if (parts.length >= 2) {
+    return parts[parts.length - 2].trim()
+  }
+  return 'Ciudad no disponible'
+}
+
+const Page = () => {
   const { getProperties, isLoading, properties } = useProperties()
 
   useEffect(() => {
     getProperties()
   }, [])
 
+  const destinationsWithCount = useMemo(() => {
+    const countByCity = {}
+    
+    // Contar propiedades por ciudad (extraída de address)
+    properties.forEach(property => {
+      const city = extractCityFromAddress(property.address)
+
+      
+      // Normalizamos el nombre para que coincida con TOP_SEARCH
+      const normalizedCity = city.includes('Buenos Aires') ? 'Buenos Aires' : city
+      countByCity[normalizedCity] = (countByCity[normalizedCity] || 0) + 1
+    })
+
+    // resultados
+    return TOP_SEARCH.filter(place => {
+      const count = countByCity[place.title] || 0
+      return count > 0
+    }).map(place => ({
+      ...place,
+      subTitle: `${countByCity[place.title] || 0} Alojamiento${countByCity[place.title] !== 1 ? 's' : ''}`
+    }))
+  }, [properties])
   return (
     <div className='space-y-20'>
       <section>
@@ -54,34 +80,33 @@ const Page = () => {
 
           {(properties.length > 0 && !isLoading) && <GridProperties properties={properties} />}
           {isLoading && <Spinner />}
-
         </div>
       </section>
 
       <section className='px-8 max-w-[1400px] mx-auto'>
-        <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">Encontra los mejores alojamientos en los destinos mas buscados</h2>
+        <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">
+          Encontra los mejores alojamientos en los destinos más buscados
+        </h2>
 
-        <div className='grid grid-cols-2 lg:grid-cols-3  xl:grid-cols-4 gap-4'>
-          {
-            TOP_SEARCH?.map((place, index) => (
-
-              <div key={index} className="border-x border-b border-slate-700 rounded-2xl overflow-hidden shadow-lg transition-transform transform hover:scale-105 hover:cursor-pointer w-80 relative">
-
-                <Image
-                  src={place?.href}
-                  width={500}
-                  height={500}
-                  alt={`Destino`}
-                  className="object-cover h-96"
-                />
-
-                <div className='p-4 absolute bottom-0 text-slate-50'>
-                  <h3 className="text-2xl font-bold">{place?.title}</h3>
-                  <strong>{place?.subTitle}</strong>
-                </div>
+        <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
+          {destinationsWithCount?.map((place, index) => (
+            <div 
+              key={index} 
+              className="border-x border-b border-slate-700 rounded-2xl overflow-hidden shadow-lg transition-transform transform hover:scale-105 hover:cursor-pointer w-80 relative"
+            >
+              <Image
+                src={place.href}
+                width={500}
+                height={500}
+                alt={`Destino ${place.title}`}
+                className="object-cover h-96"
+              />
+              <div className='p-4 absolute bottom-0 text-slate-50'>
+                <h3 className="text-2xl font-bold">{place.title}</h3>
+                <strong>{place.subTitle}</strong>
               </div>
-            ))
-          }
+            </div>
+          ))}
         </div>
       </section>
 
@@ -104,10 +129,8 @@ const Page = () => {
           }
         </div>
       </section>
-    </div >
+    </div>
   )
 }
 
 export default Page
-
-
