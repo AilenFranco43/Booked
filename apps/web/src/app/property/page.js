@@ -112,7 +112,6 @@ const Page = () => {
 
         <div className="space-y-2">
           <label htmlFor="peopleQuantity">Cantidad de personas: {peopleQuantity}</label>
-
           <input
             className="w-full accent-[#318F51]"
             type="range"
