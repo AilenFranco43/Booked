@@ -1,3 +1,4 @@
+import axios from "axios";
 import { getToken } from "./token";
 const API = process.env.NEXT_PUBLIC_API_URL;
 const token = getToken();
@@ -27,66 +28,7 @@ export async function userRegister(newUser) {
   }
 }
 
-import axios from "axios";
 
-// export async function newProperty(property) {
-//   const token = getToken();
-
-//   // try {
-//     // const propertyfilter = {
-//     //   title: property.title,
-//     //   description: property.description,
-//     //   price: Number(property.price),
-//     //   max_people: Number(property.max_people),
-//     //   tags: property.tags,
-//     //   // photos: property.photos,
-//     // };
-
-//     try {
-//       const propertyData = {
-//         title: property.title,
-//         description: property.description,
-//         price: Number(property.price),
-//         max_people: Number(property.max_people),
-//         tags: property.tags,
-//         latitude: Number(property.coordinates.latitude),
-//         longitude: Number(property.coordinates.longitude),
-//         address: property.address
-//       };
-  
-//       console.log("Datos a enviar:", propertyData);
-  
-//       const response = await axios.post(`${API}/property/register`, propertyData, {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//           "Content-Type": "application/json",
-//         },
-//       });
-
-//     return { 
-//       show: true, 
-//       message: "Propiedad registrada con éxito", 
-//       type: "success" 
-//     };
-//     } catch (error) {
-//       console.error("Error en newProperty:", error);
-      
-//       let errorMessage = "Error al registrar la propiedad";
-//       if (error.response) {
-//         // El servidor respondió con un error
-//         errorMessage = error.response.data?.message || errorMessage;
-//       } else if (error.request) {
-//         // La solicitud fue hecha pero no hubo respuesta
-//         errorMessage = "No se recibió respuesta del servidor";
-//       }
-
-//       return { 
-  //         show: true, 
-  //         message: errorMessage, 
-  //         type: "error" 
-//       };
-//     }
-// }
 
 
 export async function newProperty(property) {

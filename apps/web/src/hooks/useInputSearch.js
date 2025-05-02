@@ -25,27 +25,49 @@ export const useInputSearch = () => {
     setDestinationState(false)
   }
 
+  // const redirectToPage = () => {
+
+  //   const startDate = getFormatedDate(filters?.startDate)
+  //   const endDate = getFormatedDate(filters?.endDate)
+
+  //   if (!startDate || !endDate) return
+
+  //   const start = new Date(startDate);
+  //   const end = new Date(endDate);
+
+  //   if (end <= start) return
+
+  //   const queryParams = {
+  //     address: filters?.destination,
+  //     startDate,
+  //     endDate,
+  //   }
+
+  //   const queryString = new URLSearchParams(queryParams).toString()
+  //   router.push(`/property?${queryString}`);
+  // };
+
+
+
   const redirectToPage = () => {
-
-    const startDate = getFormatedDate(filters?.startDate)
-    const endDate = getFormatedDate(filters?.endDate)
-
-    if (!startDate || !endDate) return
-
+    const startDate = getFormatedDate(filters?.startDate);
+    const endDate = getFormatedDate(filters?.endDate);
+  
+    if (!startDate || !endDate) return;
+  
     const start = new Date(startDate);
     const end = new Date(endDate);
-
-    if (end <= start) return
-
-    const queryParams = {
-      destination: filters?.destination,
-      startDate,
-      endDate,
-    }
-
-    const queryString = new URLSearchParams(queryParams).toString()
-    router.push(`/property?${queryString}`);
+  
+    if (end <= start) return;
+  
+    router.push(`/property?${new URLSearchParams({
+      address: filters?.destination?.toLowerCase(),
+      // startDate,
+      // endDate
+    }).toString()}`);
   };
+
+
 
   const handleClickSetDate = (dates) => {
     const startDate = getFormatedDate(dates?.startDate)
