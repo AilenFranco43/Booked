@@ -66,19 +66,27 @@ export class PropertyService {
       }
     }
 
+    
     if (tags) {
       // Si es un string, conviértelo a un arreglo
       const tagsArray = Array.isArray(tags) ? tags : [tags];
-
+      
       // Verificar si tagsArray está vacío o no
       if (tagsArray.length > 0) {
         filters.tags = { $in: tagsArray }; // Buscar propiedades que tengan cualquiera de los tags
       }
     }
 
+
+    
+    // Filtro por zona si está presente (búsqueda flexible con regex)
+    if (address) {
+      filters.address = { $regex: address, $options: 'i' }; // Buscar en el campo 'address' por coincidencias parciales
+    }
+
     // Construir la consulta
     let query = this.propertyModel.find(filters);
-
+    
     // Ordenar
     if (orderBy) {
       const sortOrder = orderBy === 'ASC' ? 1 : -1;
@@ -86,11 +94,7 @@ export class PropertyService {
     } else {
       query = query.sort({ createdAt: 1 });
     }
-
-    // Filtro por zona si está presente (búsqueda flexible con regex)
-    if (address) {
-      filters.address = { $regex: address, $options: 'i' }; // Buscar en el campo 'address' por coincidencias parciales
-    }
+    
 
     return await query.exec(); // Ejecutar la consulta con exec()
   }
