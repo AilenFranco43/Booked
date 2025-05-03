@@ -5,59 +5,115 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 export const useProperties = () => {
   const [properties, setProperties] = useState([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState(null)
 
-
-  const getProperties = async (inputQueryParams) => {
-    // Current available params
-    // minPrice
-
-    const params = {}
-
+  const getProperties = async (inputQueryParams = {}) => {
     setIsLoading(true)
-
-    if (inputQueryParams) {
-      Object.keys(inputQueryParams).forEach(key => {
-        if (inputQueryParams[key] !== undefined) {
-          params[key] = inputQueryParams[key].toString()
-        }
-      });
-    }
-
-    const queryParams = new URLSearchParams(params);
-
+    setError(null)
+    
     try {
-      const response = await fetch(`${API}/property?${queryParams}`)
+      const queryParams = new URLSearchParams()
+      
+      Object.entries(inputQueryParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString())
+        }
+      })
 
-      if (!response.ok || response.status !== 200) throw new Error(`Error ${response.status}: ${response.statusText}`)
+      const token = localStorage.getItem('token')
+      const response = await fetch(`${API}/property?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
 
-      const propertiesData = await response.json()
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
 
-      setProperties(propertiesData)
-    } catch (error) {
-      throw error
+      const data = await response.json()
+      setProperties(data)
+      return data
+    } catch (err) {
+      setError(err.message)
+      setProperties([])
+      throw err
     } finally {
       setIsLoading(false)
     }
   }
 
-  const getPropertyById = async (id) => {
+  const getUserProperties = async () => {
+    setIsLoading(true)
+    setError(null)
+    
     try {
-      const response = await fetch(`${API}/property/${id}`)
+      const token = localStorage.getItem('token')
+      if (!token) throw new Error('No authentication token found')
+      
+      const response = await fetch(`${API}/property/user/properties`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
 
-      if (!response.ok || response.status !== 200) throw new Error(`Error ${response.status}: ${response.statusText}`)
+      console.log("Response status:", response.status)
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`)
+      }
 
-      const propertyData = await response.json()
-      return propertyData
-    } catch (error) {
-      throw error
+      const data = await response.json()
+      setProperties(data)
+      return data
+    } catch (err) {
+      console.error("Error in getUserProperties:", err)
+      setError(err.message)
+      setProperties([])
+      throw err
+    } finally {
+      setIsLoading(false)
     }
   }
 
+  const deleteProperty = async (propertyId) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/property/delete/${propertyId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+  
+      // Actualiza la lista de propiedades después de eliminar
+      await getUserProperties();
+      return true;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+
+
   return {
     getProperties,
-    getPropertyById,
+    getUserProperties,
+    deleteProperty,
     properties,
-    isLoading
+    isLoading,
+    error
   }
 }

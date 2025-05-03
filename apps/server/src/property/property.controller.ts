@@ -48,8 +48,8 @@ export class PropertyController {
     status: 404,
     description: 'No properties found for the specified user',
   })
-  @UseGuards(AuthGuard('jwt'))
   @Get('user/properties')
+  @UseGuards(AuthGuard('jwt'))
   async findAllByUserId(@GetUser() user: User) {
     return await this.propertyService.findAllByUserId(user.id);
   }
