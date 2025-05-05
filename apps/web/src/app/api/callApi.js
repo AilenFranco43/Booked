@@ -29,6 +29,24 @@ export async function userRegister(newUser) {
 }
 
 
+// Obtener usuario por ID
+export async function getUserById(userId) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/user/${userId}`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener usuario');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en getUserById:', error);
+    throw error;
+  }
+}
+
+
 
 
 export async function newProperty(property) {

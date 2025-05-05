@@ -12,6 +12,7 @@ import { paymentStripe } from "@/app/api/callApi";
 import userImage from "../../../public/Perfil.png";
 import { useInputSearch } from "../../../../hooks/useInputSearch";
 import Map from "@/components/ui/Map";
+import { getUserById } from "@/app/api/callApi";
 
 const PropertyDetail = () => {
   const params = useParams();
@@ -25,6 +26,19 @@ const PropertyDetail = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [hostData, setHostData] = useState(null);
+
+  useEffect(() => {
+    if (currentProperty.userId) {
+      getUserById(currentProperty.userId)
+        .then((userData) => {
+          setHostData(userData); // Guarda todos los datos del usuario
+        })
+        .catch((error) => {
+          console.error("Error al obtener datos del propietario:", error);
+        });
+    }
+  }, [currentProperty.userId]);
 
   // Estado para fechas
   const [dateRange, setDateRange] = useState({
@@ -55,7 +69,6 @@ const PropertyDetail = () => {
     }
   }, [startDate, endDate, currentProperty]);
 
- 
   useEffect(() => {
     setIsLoading(true);
     getPropertyById(params?.id)
@@ -101,7 +114,9 @@ const PropertyDetail = () => {
         <div className="flex gap-20">
           <div className="space-y-4 h-fit w-80 bg-slate-50 rounded p-6 border border-slate-200 shadow-md sticky top-4">
             <header className="space-y-2">
-              <h2 className="font-semibold">{currentProperty?.title}</h2>
+              <h2 className="font-semibold"> {currentProperty?.title ? 
+    currentProperty.title.charAt(0).toUpperCase() + currentProperty.title.slice(1).toLowerCase() 
+    : ''}</h2>
               <p className="font-medium">
                 <span className="text-green-600">
                   ${currentProperty?.price}
@@ -307,7 +322,13 @@ const PropertyDetail = () => {
             {/* Información del anfitrión */}
             <div className="flex justify-center items-center gap-10 text-slate-700">
               <div className="flex flex-col justify-center items-center p-4 w-[500px]">
-                <Image src={userImage} alt="Perfil" width={100} height={100} />
+                <Image
+                  src={hostData?.avatar || ''}
+                  alt="Foto de perfil del anfitrión"
+                  width={96}
+                  height={96}
+                  className="rounded-full object-cover"
+                />
                 <strong>Marcelo</strong>
                 <span className="py-2">Información confirmada</span>
                 <ul>
@@ -349,9 +370,16 @@ const PropertyDetail = () => {
                     <p className="text-amber-500 font-semibold">
                       Envíale un mensaje a tu anfitrión
                     </p>
-                    <button className="bg-[#318F51] py-1 px-2 rounded text-slate-50 font-semibold">
-                      Toca acá para chatear
-                    </button>
+                    {hostData?.email ? (
+                      <a
+                        href={`mailto:${hostData.email}?subject=Consulta sobre ${currentProperty.title}`}
+                        className="bg-[#318F51] py-1 px-2 rounded text-slate-50 font-semibold hover:bg-[#5FA77C] transition-colors"
+                      >
+                        Enviar correo
+                      </a>
+                    ) : (
+                      <p className="text-gray-500">Contacto no disponible</p>
+                    )}
                   </div>
                 </div>
               </div>
