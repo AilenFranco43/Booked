@@ -329,7 +329,7 @@ const PropertyDetail = () => {
                   height={96}
                   className="rounded-full object-cover"
                 />
-                <strong>Marcelo</strong>
+                <strong>{hostData?.name}</strong>
                 <span className="py-2">Información confirmada</span>
                 <ul>
                   <li>✔ Identidad</li>

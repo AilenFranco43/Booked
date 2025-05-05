@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { REM } from "next/font/google";
 import Link from "next/link";
 import {
@@ -83,13 +84,7 @@ export const Header = () => {
         {status === USER_STATE.VERIFIED && (
           <DropdownMenu>
             <DropdownMenuTrigger className="focus:outline-none">
-              <Image
-                src={user?.avatar || "/default-profile.png"}
-                alt="Perfil"
-                width={70}
-                height={70}
-                className="rounded-full object-cover"
-              />
+              <Avatar src={user?.avatar} alt={user?.name} />
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="bg-[#5FA777] w-[180px]">
