@@ -57,26 +57,32 @@ export const useProperties = () => {
           'Authorization': `Bearer ${token}`
         }
       })
-
+  
       console.log("Response status:", response.status)
       
+      //  si es 404, devuelve lista vacía
+      if (response.status === 404) {
+        setProperties([])  // El usuario simplemente no tiene propiedades
+        return []
+      }
+  
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`)
       }
-
+  
       const data = await response.json()
-      setProperties(data)
+      setProperties(data || [])
       return data
     } catch (err) {
       console.error("Error in getUserProperties:", err)
       setError(err.message)
-      setProperties([])
-      throw err
+      setProperties([])  // Asegura que el componente no se rompa
+      // ⚠️ NO hace falta `throw err` si ya estás manejando el error en el componente
     } finally {
       setIsLoading(false)
     }
   }
-
+  
   const deleteProperty = async (propertyId) => {
     setIsLoading(true);
     setError(null);

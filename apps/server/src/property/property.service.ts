@@ -126,7 +126,7 @@ export class PropertyService {
     return updatedProperty;
   }
 
-  async remove(id: number): Promise<Property> {
+  async remove(id: string): Promise<Property> {
     return this.propertyModel.findByIdAndDelete(id).exec();
   }
 

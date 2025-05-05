@@ -91,7 +91,7 @@ export class PropertyController {
   @ApiResponse({ status: 200, description: 'Deleted property success' })
   @Delete('delete/:id')
   @UseGuards(AuthGuard('jwt'))
-  async remove(@Param('id') id: number) {
+  async remove(@Param('id') id: string) {
     return this.propertyService.remove(id);
   }
 

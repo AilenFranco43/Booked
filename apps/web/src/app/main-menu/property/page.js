@@ -7,11 +7,19 @@ import { useRouter } from "next/navigation"
 import { useProperties } from "@/hooks/useProperties"
 import { CardProperty } from "@/components/CardProperty"
 import { Spinner } from "@/ui/Spinner"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreVertical } from "lucide-react"
+
 
 export default function Property() {
   const router = useRouter()
   const [show, setShow] = useState(false)
-  const { properties, isLoading, error, getUserProperties } = useProperties()
+  const { properties, isLoading, error, getUserProperties, deleteProperty } = useProperties()
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +40,20 @@ export default function Property() {
     router.push("register-property")
   }
 
-  console.log("Current state:", { isLoading, error, properties })
+
+
+  const handleDelete = async (id) => {
+    const confirmDelete = window.confirm("¿Estás seguro que deseas eliminar esta propiedad?");
+    if (!confirmDelete) return;
+  
+    try {
+      await deleteProperty(id);
+    } catch (err) {
+      console.error("Error al eliminar la propiedad:", err);
+    }
+  };
+  
+  
 
   return (
     <div className="w-full">
@@ -72,9 +93,33 @@ export default function Property() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {properties.map((property) => (
-              <CardProperty key={property._id} property={property} />
-            ))}
+          {properties.map((property) => (
+  <div key={property.id} className="relative">
+    <CardProperty property={property} />
+
+    <div className="absolute top-2 right-2 z-10">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreVertical className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => handleDelete(property.id)}
+            className="text-red-600 hover:bg-red-100"
+          >
+            Eliminar
+          </DropdownMenuItem>
+          {/* Más opciones en el futuro */}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  </div>
+))}
+
+
           </div>
         </div>
       ) : (
