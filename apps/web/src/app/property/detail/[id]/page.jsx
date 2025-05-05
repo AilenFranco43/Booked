@@ -55,7 +55,7 @@ const PropertyDetail = () => {
     }
   }, [startDate, endDate, currentProperty]);
 
-  // Cargar datos de la propiedad
+ 
   useEffect(() => {
     setIsLoading(true);
     getPropertyById(params?.id)

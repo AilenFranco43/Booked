@@ -25,7 +25,7 @@ export const CardProperty = ({ property }) => {
 
   return (
     <div className="border-2 border-[#5FA77780] rounded-2xl overflow-hidden shadow-lg transition-transform transform hover:scale-105 hover:cursor-pointer">
-      <Link href={`property/detail/${property?.id}`}>
+      <Link href={`/property/detail/${property?.id}`}>
         <Image
           src={photoUrl}
           width={300}

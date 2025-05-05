@@ -104,6 +104,20 @@ export const useProperties = () => {
       setIsLoading(false);
     }
   };
+
+  const getPropertyById = async (id) => {
+    try {
+      const response = await fetch(`${API}/property/${id}`)
+
+      if (!response.ok || response.status !== 200) throw new Error(`Error ${response.status}: ${response.statusText}`)
+
+      const propertyData = await response.json()
+      return propertyData
+    } catch (error) {
+      throw error
+    }
+  }
+
   
 
 
@@ -112,6 +126,7 @@ export const useProperties = () => {
     getProperties,
     getUserProperties,
     deleteProperty,
+    getPropertyById,
     properties,
     isLoading,
     error
