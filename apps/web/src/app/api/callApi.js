@@ -75,6 +75,35 @@ export async function newProperty(property) {
   }
 }
 
+
+export async function newReview(reviewData) {
+  const token = getToken();
+  
+  try {
+    const response = await axios.post(`${API}/reviews/create`, reviewData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return {
+      show: true,
+      message: "Valoración enviada con éxito",
+      type: "success",
+      data: response.data
+    };
+  } catch (error) {
+    console.error("Error en newReview:", error);
+    return {
+      show: true,
+      message: error.response?.data?.message || "Error al enviar la valoración",
+      type: "error"
+    };
+  }
+}
+
+
 // export async function paymentStripe(newPayment) {
 //   const sanitizedPayment = {
 //     ...newPayment,

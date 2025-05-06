@@ -1,38 +1,73 @@
 "use client";
 
-import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+// Importaciones de librerías externas
 import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { useProperties } from "../../../../hooks/useProperties";
+
+// Importaciones de componentes locales
 import { InputSearch } from "../../../../ui/InputSearch";
 import { Spinner } from "../../../../ui/Spinner";
-import { paymentStripe } from "@/app/api/callApi";
-import userImage from "../../../public/Perfil.png";
-import { useInputSearch } from "../../../../hooks/useInputSearch";
 import Map from "@/components/ui/Map";
+import RatingForm from "@/components/ui/RatingFrom";
+
+// Importaciones de hooks personalizados
+import { useProperties } from "../../../../hooks/useProperties";
+import { useInputSearch } from "../../../../hooks/useInputSearch";
+import { useAuth } from "@/hooks/useAuth";
+
+// Importaciones de API
+import { paymentStripe } from "@/app/api/callApi";
 import { getUserById } from "@/app/api/callApi";
 
+// Importaciones de assets
+import userImage from "../../../public/Perfil.png";
+
 const PropertyDetail = () => {
+  // Hooks de routing y autenticación
   const params = useParams();
   const router = useRouter();
+  const { user: currentUser } = useAuth();
 
-  // Estados
+  // Hooks personalizados
+  const { searchValues } = useInputSearch();
+  const { getPropertyById } = useProperties();
+
+  // Estados principales
   const [currentProperty, setCurrentProperty] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [hostData, setHostData] = useState(null);
+
+  // Estados para reserva
   const [selectedPeopleQuantity, setSelectedPeopleQuantity] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [dateRange, setDateRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const { startDate, endDate } = dateRange;
+
+  // Estados para galería de imágenes
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [hostData, setHostData] = useState(null);
+
+  // Efectos
+  useEffect(() => {
+    setIsLoading(true);
+    getPropertyById(params?.id)
+      .then((data) => setCurrentProperty(data))
+      .catch((error) => router.push("/"))
+      .finally(() => setIsLoading(false));
+  }, []);
 
   useEffect(() => {
     if (currentProperty.userId) {
       getUserById(currentProperty.userId)
         .then((userData) => {
-          setHostData(userData); // Guarda todos los datos del usuario
+          setHostData(userData);
         })
         .catch((error) => {
           console.error("Error al obtener datos del propietario:", error);
@@ -40,25 +75,6 @@ const PropertyDetail = () => {
     }
   }, [currentProperty.userId]);
 
-  // Estado para fechas
-  const [dateRange, setDateRange] = useState({
-    startDate: null,
-    endDate: null,
-  });
-  const { startDate, endDate } = dateRange;
-
-  const { searchValues } = useInputSearch();
-  const { getPropertyById } = useProperties();
-
-  // Función para calcular días entre fechas
-  function countDaysBetweenDates(start, end) {
-    if (!start || !end) return 0;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    return Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-  }
-
-  // Efecto para calcular el precio total
   useEffect(() => {
     if (startDate && endDate) {
       const totalDays = countDaysBetweenDates(startDate, endDate);
@@ -69,15 +85,14 @@ const PropertyDetail = () => {
     }
   }, [startDate, endDate, currentProperty]);
 
-  useEffect(() => {
-    setIsLoading(true);
-    getPropertyById(params?.id)
-      .then((data) => setCurrentProperty(data))
-      .catch((error) => router.push("/"))
-      .finally(() => setIsLoading(false));
-  }, []);
+  // Funciones auxiliares
+  function countDaysBetweenDates(start, end) {
+    if (!start || !end) return 0;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    return Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+  }
 
-  // Manejar reserva
   const handleClickReserve = async () => {
     if (!startDate || !endDate) {
       alert("Por favor selecciona fechas de check-in y check-out");
@@ -102,6 +117,7 @@ const PropertyDetail = () => {
     }
   };
 
+  // Renderizado
   return (
     <section className="p-8 space-y-8">
       <div className="flex justify-center items-center">
@@ -112,20 +128,21 @@ const PropertyDetail = () => {
 
       {!isLoading && Object.keys(currentProperty).length > 1 && (
         <div className="flex gap-20">
+          {/* Panel de reserva */}
           <div className="space-y-4 h-fit w-80 bg-slate-50 rounded p-6 border border-slate-200 shadow-md sticky top-4">
             <header className="space-y-2">
-              <h2 className="font-semibold"> {currentProperty?.title ? 
-    currentProperty.title.charAt(0).toUpperCase() + currentProperty.title.slice(1).toLowerCase() 
-    : ''}</h2>
+              <h2 className="font-semibold">
+                {currentProperty?.title
+                  ? currentProperty.title.charAt(0).toUpperCase() +
+                    currentProperty.title.slice(1).toLowerCase()
+                  : ""}
+              </h2>
               <p className="font-medium">
-                <span className="text-green-600">
-                  ${currentProperty?.price}
-                </span>
+                <span className="text-green-600">${currentProperty?.price}</span>
                 /la noche
               </p>
             </header>
 
-            {/* Selector de fechas */}
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
                 Fechas de estadía
@@ -151,13 +168,11 @@ const PropertyDetail = () => {
               />
               {startDate && endDate && (
                 <p className="text-sm text-gray-600">
-                  {countDaysBetweenDates(startDate, endDate)} noches
-                  seleccionadas
+                  {countDaysBetweenDates(startDate, endDate)} noches seleccionadas
                 </p>
               )}
             </div>
 
-            {/* Selector de huéspedes */}
             <div>
               <label htmlFor="">Huéspedes: {selectedPeopleQuantity}</label>
               <input
@@ -166,14 +181,11 @@ const PropertyDetail = () => {
                 min={1}
                 max={20}
                 className="w-full accent-[#318F51]"
-                onChange={(data) =>
-                  setSelectedPeopleQuantity(data.target.value)
-                }
+                onChange={(data) => setSelectedPeopleQuantity(data.target.value)}
                 value={selectedPeopleQuantity}
               />
             </div>
 
-            {/* Botón de reserva */}
             <button
               onClick={handleClickReserve}
               className="bg-[#318F51] py-2 rounded-lg w-full font-semibold text-slate-100 hover:bg-[#5FA77C82]/70 transition-colors"
@@ -182,7 +194,6 @@ const PropertyDetail = () => {
               Reservar
             </button>
 
-            {/* Total */}
             <div className="text-center">
               <strong>Total: ${totalPrice.toFixed(2)}</strong>
               {startDate && endDate && (
@@ -194,9 +205,9 @@ const PropertyDetail = () => {
             </div>
           </div>
 
-          {/* Sección de imágenes y descripción*/}
-
+          {/* Contenido principal */}
           <div className="space-y-8 size-[1200px] h-full">
+            {/* Galería de imágenes */}
             <div className="p-4 grid grid-cols-8 gap-2 bg-[#5FA77738] rounded-xl max-w-4xl mx-auto">
               {currentProperty.photos?.length > 0 ? (
                 <>
@@ -219,8 +230,7 @@ const PropertyDetail = () => {
                       src={photo}
                       alt={`Imagen ${index + 1} de ${currentProperty.title}`}
                       onClick={() => {
-                        const clickedIndex =
-                          currentProperty.photos.indexOf(photo);
+                        const clickedIndex = currentProperty.photos.indexOf(photo);
                         setCurrentImageIndex(clickedIndex);
                         setSelectedImage(photo);
                         setIsModalOpen(true);
@@ -229,9 +239,7 @@ const PropertyDetail = () => {
                   ))}
                 </>
               ) : (
-                <p className="col-span-8 text-center py-10">
-                  No hay imágenes disponibles
-                </p>
+                <p className="col-span-8 text-center py-10">No hay imágenes disponibles</p>
               )}
 
               <div className="col-span-8 pt-4">
@@ -239,15 +247,13 @@ const PropertyDetail = () => {
               </div>
             </div>
 
-            {/* Modal para imágenes */}
+            {/* Modal de imagen */}
             {isModalOpen && (
               <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 h-full top-[-30px]">
                 <button
                   onClick={() => {
                     setCurrentImageIndex(
-                      (prev) =>
-                        (prev - 1 + currentProperty.photos.length) %
-                        currentProperty.photos.length
+                      (prev) => (prev - 1 + currentProperty.photos.length) % currentProperty.photos.length
                     );
                     setSelectedImage(currentProperty.photos[currentImageIndex]);
                   }}
@@ -276,9 +282,7 @@ const PropertyDetail = () => {
 
                 <button
                   onClick={() => {
-                    setCurrentImageIndex(
-                      (prev) => (prev + 1) % currentProperty.photos.length
-                    );
+                    setCurrentImageIndex((prev) => (prev + 1) % currentProperty.photos.length);
                     setSelectedImage(currentProperty.photos[currentImageIndex]);
                   }}
                   className="text-white text-4xl p-4 hover:text-gray-300 absolute right-4"
@@ -289,13 +293,10 @@ const PropertyDetail = () => {
               </div>
             )}
 
-            {/* Resto del contenido... */}
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
             <div className="flex font-bold text-xl px-10 gap-20">
-              <h3 className="text-slate-700">
-                Mejor valorado por los huéspedes
-              </h3>
+              <h3 className="text-slate-700">Mejor valorado por los huéspedes</h3>
               <div className="flex gap-4">
                 <small>4.9 ⭐</small>
                 <p>10</p>
@@ -315,13 +316,13 @@ const PropertyDetail = () => {
               />
             </div>
 
-            <h3 className="font-bold text-xl px-10 text-slate-700 py-10">
+            {/* Información del anfitrión */}
+            <h3 className="font-bold text-xl px-10 text-slate-700 pt-10">
               Conoce a tu anfitrión
             </h3>
 
-            {/* Información del anfitrión */}
             <div className="flex justify-center items-center gap-10 text-slate-700">
-              <div className="flex flex-col justify-center items-center p-4 w-[500px]">
+              <div className="flex flex-col justify-center items-center p-4">
                 <Image
                   src={hostData?.avatar || ''}
                   alt="Foto de perfil del anfitrión"
@@ -340,15 +341,15 @@ const PropertyDetail = () => {
 
               <div>
                 <div className="flex divide-x">
-                  <div className="flex flex-col justify-center items-center pr-4 font-bold">
-                    <h4>Calificación</h4>
-                    4.8 ⭐
+                  <div className="flex flex-col justify-center items-center px-4 font-bold">
+                    <RatingForm
+                      propertyId={currentProperty?.id}
+                      guestId={currentUser?.id}
+                      onSuccess={() => {}}
+                    />
                   </div>
-                  <div className="flex flex-col justify-center items-center px-4">
-                    <strong>1</strong>
-                    <small>Año de experiencia como anfitrión</small>
-                  </div>
-                  <div className="flex flex-col justify-center items-center pl-4 font-bold">
+                
+                  <div className="flex flex-col justify-center items-center px-4 font-bold">
                     <h4>Evaluaciones</h4>
                     <small>8</small>
                   </div>
@@ -357,15 +358,6 @@ const PropertyDetail = () => {
                 <hr className="bg-slate-400 my-4" />
 
                 <div className="mx-2 space-y-4">
-                  <p>
-                    Hola, soy Marcelo, mi viaje ha sido moldeado por el deseo de
-                    crear momentos únicos para nuestros huéspedes. Con una
-                    pasión por la bienvenida y la atención al detalle,
-                    transformamos nuestro Sitio en un refugio donde el confort y
-                    la naturaleza se unen en armonía. Si tienes cualquier
-                    pregunta, ponte en contacto conmigo.
-                  </p>
-
                   <div className="flex justify-between items-center">
                     <p className="text-amber-500 font-semibold">
                       Envíale un mensaje a tu anfitrión
