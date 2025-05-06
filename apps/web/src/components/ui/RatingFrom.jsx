@@ -12,8 +12,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
-import { toast } from "sonner"; // Importar toast para notificaciones
-import { newReview } from "@/app/api/callApi"; // Importar la función API
+import { toast } from "sonner"; 
+import { newReview } from "@/app/api/callApi";
 
 const RatingForm = ({ propertyId, guestId, onSuccess }) => {
   const form = useForm({
@@ -41,7 +41,7 @@ const RatingForm = ({ propertyId, guestId, onSuccess }) => {
     try {
       const reviewData = {
         property: propertyId,
-        guest: guestId, // Ahora debería tener el valor correcto
+        guest: guestId,
         rating: selectedRating,
         comment: data.comment
       };
