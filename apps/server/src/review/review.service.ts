@@ -44,6 +44,26 @@ constructor(
     return this.reviewModel.find().exec();
   }
 
+  async findByProperty(propertyId: string) {
+    const reviews = await this.reviewModel
+      .find({ property: propertyId })
+      .populate('guest', 'name')
+      .exec();
+  
+    if (!reviews || reviews.length === 0) {
+      throw new NotFoundException(`No reviews found for property with ID ${propertyId}`);
+    }
+  
+    // Calcular el rating promedio
+    const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  
+    return {
+      reviews,
+      averageRating,
+      count: reviews.length
+    };
+  }
+
   async findOne(id: string) {
     return this.reviewModel.findById(id).exec();
   }

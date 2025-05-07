@@ -41,6 +41,15 @@ export class ReviewController {
     return this.reviewService.findOne(id);
   }
 
+  @ApiOperation({ summary: 'Get reviews by property ID' })
+  @ApiResponse({ status: 200, description: 'Returns reviews for the property' })
+  @ApiResponse({ status: 404, description: 'No reviews found for this property' })
+  @Get('property/:propertyId')
+  async findByProperty(@Param('propertyId') propertyId: string) {
+    return this.reviewService.findByProperty(propertyId);
+  }
+
+
   @ApiOperation({ summary: 'Update a review' })
   @ApiResponse({ status: 200, description: 'Review updated successfully' })
   @ApiResponse({ status: 400, description: 'Review not actualized' })

@@ -8,10 +8,13 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
 // Importaciones de componentes locales
+import { Avatar } from "@/components/ui/avatar";
 import { InputSearch } from "../../../../ui/InputSearch";
 import { Spinner } from "../../../../ui/Spinner";
 import Map from "@/components/ui/Map";
 import RatingForm from "@/components/ui/RatingFrom";
+
+import { ReviewCard } from "@/components/ui/ReviewCard";
 
 // Importaciones de hooks personalizados
 import { useProperties } from "../../../../hooks/useProperties";
@@ -19,8 +22,11 @@ import { useInputSearch } from "../../../../hooks/useInputSearch";
 import { useAuth } from "@/hooks/useAuth";
 
 // Importaciones de API
-import { paymentStripe } from "@/app/api/callApi";
-import { getUserById } from "@/app/api/callApi";
+import {
+  paymentStripe,
+  getUserById,
+  getReviewsByProperty,
+} from "@/app/api/callApi";
 
 // Importaciones de assets
 import userImage from "../../../public/Perfil.png";
@@ -48,6 +54,12 @@ const PropertyDetail = () => {
     endDate: null,
   });
   const { startDate, endDate } = dateRange;
+
+  // Estados para reseñas
+  const [reviews, setReviews] = useState([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(true);
 
   // Estados para galería de imágenes
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -85,6 +97,39 @@ const PropertyDetail = () => {
     }
   }, [startDate, endDate, currentProperty]);
 
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (currentProperty.id) {
+        setIsLoadingReviews(true);
+        try {
+          const data = await getReviewsByProperty(currentProperty.id);
+          setReviews(data.reviews || []);
+
+          // Calcular el promedio si no viene del backend
+          if (data.reviews && data.reviews.length > 0) {
+            const avg =
+              data.reviews.reduce((sum, review) => sum + review.rating, 0) /
+              data.reviews.length;
+            setAverageRating(avg);
+            setReviewCount(data.reviews.length);
+          } else {
+            setAverageRating(0);
+            setReviewCount(0);
+          }
+        } catch (error) {
+          console.error("Error fetching reviews:", error);
+          setReviews([]);
+          setAverageRating(0);
+          setReviewCount(0);
+        } finally {
+          setIsLoadingReviews(false);
+        }
+      }
+    };
+
+    fetchReviews();
+  }, [currentProperty.id]);
+
   // Funciones auxiliares
   function countDaysBetweenDates(start, end) {
     if (!start || !end) return 0;
@@ -117,7 +162,6 @@ const PropertyDetail = () => {
     }
   };
 
-  // Renderizado
   return (
     <section className="p-8 space-y-8">
       <div className="flex justify-center items-center">
@@ -138,7 +182,9 @@ const PropertyDetail = () => {
                   : ""}
               </h2>
               <p className="font-medium">
-                <span className="text-green-600">${currentProperty?.price}</span>
+                <span className="text-green-600">
+                  ${currentProperty?.price}
+                </span>
                 /la noche
               </p>
             </header>
@@ -168,7 +214,8 @@ const PropertyDetail = () => {
               />
               {startDate && endDate && (
                 <p className="text-sm text-gray-600">
-                  {countDaysBetweenDates(startDate, endDate)} noches seleccionadas
+                  {countDaysBetweenDates(startDate, endDate)} noches
+                  seleccionadas
                 </p>
               )}
             </div>
@@ -181,7 +228,9 @@ const PropertyDetail = () => {
                 min={1}
                 max={20}
                 className="w-full accent-[#318F51]"
-                onChange={(data) => setSelectedPeopleQuantity(data.target.value)}
+                onChange={(data) =>
+                  setSelectedPeopleQuantity(data.target.value)
+                }
                 value={selectedPeopleQuantity}
               />
             </div>
@@ -230,7 +279,8 @@ const PropertyDetail = () => {
                       src={photo}
                       alt={`Imagen ${index + 1} de ${currentProperty.title}`}
                       onClick={() => {
-                        const clickedIndex = currentProperty.photos.indexOf(photo);
+                        const clickedIndex =
+                          currentProperty.photos.indexOf(photo);
                         setCurrentImageIndex(clickedIndex);
                         setSelectedImage(photo);
                         setIsModalOpen(true);
@@ -239,7 +289,9 @@ const PropertyDetail = () => {
                   ))}
                 </>
               ) : (
-                <p className="col-span-8 text-center py-10">No hay imágenes disponibles</p>
+                <p className="col-span-8 text-center py-10">
+                  No hay imágenes disponibles
+                </p>
               )}
 
               <div className="col-span-8 pt-4">
@@ -253,7 +305,9 @@ const PropertyDetail = () => {
                 <button
                   onClick={() => {
                     setCurrentImageIndex(
-                      (prev) => (prev - 1 + currentProperty.photos.length) % currentProperty.photos.length
+                      (prev) =>
+                        (prev - 1 + currentProperty.photos.length) %
+                        currentProperty.photos.length
                     );
                     setSelectedImage(currentProperty.photos[currentImageIndex]);
                   }}
@@ -282,7 +336,9 @@ const PropertyDetail = () => {
 
                 <button
                   onClick={() => {
-                    setCurrentImageIndex((prev) => (prev + 1) % currentProperty.photos.length);
+                    setCurrentImageIndex(
+                      (prev) => (prev + 1) % currentProperty.photos.length
+                    );
                     setSelectedImage(currentProperty.photos[currentImageIndex]);
                   }}
                   className="text-white text-4xl p-4 hover:text-gray-300 absolute right-4"
@@ -296,7 +352,9 @@ const PropertyDetail = () => {
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
             <div className="flex font-bold text-xl px-10 gap-20">
-              <h3 className="text-slate-700">Mejor valorado por los huéspedes</h3>
+              <h3 className="text-slate-700">
+                Mejor valorado por los huéspedes
+              </h3>
               <div className="flex gap-4">
                 <small>4.9 ⭐</small>
                 <p>10</p>
@@ -317,19 +375,12 @@ const PropertyDetail = () => {
             </div>
 
             {/* Información del anfitrión */}
-            <h3 className="font-bold text-xl px-10 text-slate-700 pt-10">
-              Conoce a tu anfitrión
-            </h3>
-
             <div className="flex justify-center items-center gap-10 text-slate-700">
-              <div className="flex flex-col justify-center items-center p-4">
-                <Image
-                  src={hostData?.avatar || ''}
-                  alt="Foto de perfil del anfitrión"
-                  width={96}
-                  height={96}
-                  className="rounded-full object-cover"
-                />
+              <div className="flex flex-col justify-center items-center w-[400px]">
+                <h3 className="font-bold text-xl px-10 text-slate-700 pt-10">
+                  Conoce a tu anfitrión
+                </h3>
+                <Avatar src={hostData?.avatar} alt={hostData?.name} />
                 <strong>{hostData?.name}</strong>
                 <span className="py-2">Información confirmada</span>
                 <ul>
@@ -341,18 +392,37 @@ const PropertyDetail = () => {
 
               <div>
                 <div className="flex divide-x">
-                  <div className="flex flex-col justify-center items-center px-4 font-bold">
-                    <RatingForm
-                      propertyId={currentProperty?.id}
-                      guestId={currentUser?.id}
-                      onSuccess={() => {}}
-                    />
+                  {/* Sección de Reseñas */}
+                  <div className="mt-12 px-10">
+                    <h3 className="font-bold text-2xl text-slate-700 mb-6">
+                      Reseñas de los huéspedes
+                    </h3>
+
+                    {isLoadingReviews ? (
+                      <div className="flex justify-center py-8">
+                        <Spinner />
+                      </div>
+                    ) : reviews.length > 0 ? (
+                      <div className="space-y-6">
+                        {reviews.map((review) => (
+                          <ReviewCard
+                            key={review._id || review.id}
+                            review={review}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-6 rounded-lg text-center">
+                        <p className="text-gray-500">
+                          Esta propiedad aún no tiene reseñas. Sé el primero en
+                          opinar.
+                        </p>
+                      </div>
+                    )}
                   </div>
-                
-                  <div className="flex flex-col justify-center items-center px-4 font-bold">
-                    <h4>Evaluaciones</h4>
-                    <small>8</small>
-                  </div>
+                </div>
+                <div>
+                  <RatingForm></RatingForm>
                 </div>
 
                 <hr className="bg-slate-400 my-4" />

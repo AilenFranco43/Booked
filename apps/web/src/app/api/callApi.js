@@ -103,6 +103,25 @@ export async function newReview(reviewData) {
   }
 }
 
+// Obtener reseñas por propiedad
+export async function getReviewsByProperty(propertyId) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/property/${propertyId}`);
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener reseñas');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en getReviewsByProperty:', error);
+    throw error;
+  }
+}
+
+
+
 
 // export async function paymentStripe(newPayment) {
 //   const sanitizedPayment = {
