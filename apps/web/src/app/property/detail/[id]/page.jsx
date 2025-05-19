@@ -13,6 +13,7 @@ import { InputSearch } from "../../../../ui/InputSearch";
 import { Spinner } from "../../../../ui/Spinner";
 import Map from "@/components/ui/Map";
 import RatingForm from "@/components/ui/RatingForm";
+import RatingSummary from "@/components/ui/RatingSumary";
 
 import { ReviewCard } from "@/components/ui/ReviewCard";
 
@@ -26,10 +27,8 @@ import {
   paymentStripe,
   getUserById,
   getReviewsByProperty,
-  deleteReview
+  deleteReview,
 } from "@/app/api/callApi";
-
-
 
 const PropertyDetail = () => {
   // Hooks de routing y autenticación
@@ -162,42 +161,42 @@ const PropertyDetail = () => {
     }
   };
   // Función para manejar la eliminación de reseñas
-const handleDeleteReview = async (reviewId) => {
-  try {
-    // Optimistic update (actualización inmediata antes de la respuesta del servidor)
-    const previousReviews = [...reviews];
-    setReviews(prev => prev.filter(r => 
-      (r.id !== reviewId && r._id !== reviewId)
-    ));
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      // Optimistic update (actualización inmediata antes de la respuesta del servidor)
+      const previousReviews = [...reviews];
+      setReviews((prev) =>
+        prev.filter((r) => r.id !== reviewId && r._id !== reviewId)
+      );
 
-    // Intenta eliminar en el servidor
-    await deleteReview(reviewId);
+      // Intenta eliminar en el servidor
+      await deleteReview(reviewId);
 
-    // Recalcular promedio
-    const updatedReviews = previousReviews.filter(r => 
-      (r.id !== reviewId && r._id !== reviewId)
-    );
-    
-    if (updatedReviews.length > 0) {
-      const avg = updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
-      setAverageRating(avg);
-    } else {
-      setAverageRating(0);
+      // Recalcular promedio
+      const updatedReviews = previousReviews.filter(
+        (r) => r.id !== reviewId && r._id !== reviewId
+      );
+
+      if (updatedReviews.length > 0) {
+        const avg =
+          updatedReviews.reduce((sum, r) => sum + r.rating, 0) /
+          updatedReviews.length;
+        setAverageRating(avg);
+      } else {
+        setAverageRating(0);
+      }
+      setReviewCount(updatedReviews.length);
+    } catch (error) {
+      // Si falla, revertir los cambios
+      setReviews(previousReviews);
+      console.error("Error completo al eliminar:", {
+        message: error.message,
+        reviewId,
+        currentUser: currentUser?.id,
+      });
+      alert(`Error al eliminar: ${error.message}`);
     }
-    setReviewCount(updatedReviews.length);
-
-  } catch (error) {
-    // Si falla, revertir los cambios
-    setReviews(previousReviews);
-    console.error("Error completo al eliminar:", {
-      message: error.message,
-      reviewId,
-      currentUser: currentUser?.id
-    });
-    alert(`Error al eliminar: ${error.message}`);
-  }
-};
-
+  };
 
   return (
     <section className="p-8 space-y-8">
@@ -388,15 +387,21 @@ const handleDeleteReview = async (reviewId) => {
 
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
-            {/* <div className="flex font-bold text-xl px-10 gap-20">
-              <h3 className="text-slate-700">
-                Mejor valorado por los huéspedes
+            <hr className="h-[1px] bg-slate-400 mx-10" />
+
+
+            {/* Promedio de valoraciones */}
+            <div className="flex justify-between items-center px-10">
+              <h3 className="font-bold text-xl text-slate-700">
+                Valoración de los huéspedes
               </h3>
-              <div className="flex gap-4">
-                <small>4.9 ⭐</small>
-                <p>10</p>
-              </div>
-            </div> */}
+              <RatingSummary
+                averageRating={averageRating}
+                reviewCount={reviewCount}
+              />
+            </div>
+
+            <hr className="h-[1px] bg-slate-400 mx-10" />
 
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
