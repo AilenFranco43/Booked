@@ -14,8 +14,13 @@ import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { toast } from "sonner";
 import { newReview } from "@/app/api/callApi";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation"; 
 
-const RatingForm = ({ propertyId, guestId, onSuccess }) => {
+
+const RatingForm = ({ propertyId, onSuccess }) => {
+   const router = useRouter();
+  const { user: currentUser } = useAuth();
   const form = useForm({
     defaultValues: {
       comment: "",
@@ -26,7 +31,7 @@ const RatingForm = ({ propertyId, guestId, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (data) => {
-    if (!guestId) {
+    if (!currentUser?.id) {
       toast.error("Debes iniciar sesión para enviar una valoración");
       return;
     }
@@ -41,19 +46,17 @@ const RatingForm = ({ propertyId, guestId, onSuccess }) => {
     try {
       const reviewData = {
         property: propertyId,
-        guest: guestId,
+        guest: currentUser.id,
         rating: selectedRating,
         comment: data.comment,
       };
 
-      console.log("Datos a enviar:", reviewData);
-
       const result = await newReview(reviewData);
       if (result.type === "success") {
         toast.success(result.message);
-        form.reset(); // limpia el comentario
-        setSelectedRating(0); // resetea las estrellas
-        onSuccess?.(); // actualiza la vista si pasaste una función
+        form.reset();
+        setSelectedRating(0);
+        onSuccess?.();
       } else {
         toast.error(result.message);
       }
@@ -67,6 +70,21 @@ const RatingForm = ({ propertyId, guestId, onSuccess }) => {
     }
   };
 
+  if (!currentUser) {
+    return (
+      <div className="p-4 bg-white rounded shadow text-center">
+        <p className="text-gray-600 mb-4">
+          Debes iniciar sesión para dejar una valoración
+        </p>
+        <Button 
+          onClick={() => router.push('/auth/login')} 
+          className="bg-[#318F51] hover:bg-[#5FA77C]"
+        >
+          Iniciar sesión
+        </Button>
+      </div>
+    );
+  }
   return (
     <Form {...form}>
       <form

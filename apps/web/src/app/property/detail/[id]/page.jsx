@@ -389,7 +389,6 @@ const PropertyDetail = () => {
 
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
-
             {/* Promedio de valoraciones */}
             <div className="flex justify-between items-center px-10">
               <h3 className="font-bold text-xl text-slate-700">
@@ -469,6 +468,10 @@ const PropertyDetail = () => {
                   <RatingForm
                     propertyId={currentProperty.id}
                     guestId={currentUser?.id}
+                    onSuccess={() => {
+                      // Recargar las reseñas después de enviar una nueva
+                      fetchReviews();
+                    }}
                   />
                 </div>
 
