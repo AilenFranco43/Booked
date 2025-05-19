@@ -106,7 +106,7 @@ export async function newReview(reviewData) {
 // Obtener reseñas por propiedad
 export async function getReviewsByProperty(propertyId) {
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/property/${propertyId}`);
+    const response = await fetch(`${API}/reviews/property/${propertyId}`);
     
     if (!response.ok) {
       const errorData = await response.json();
@@ -119,6 +119,29 @@ export async function getReviewsByProperty(propertyId) {
     throw error;
   }
 }
+
+export async function getUserReview(propertyId, guestId) {
+  const res = await fetch(`${API}/reviews?property=${propertyId}&guest=${guestId}`);
+  if (!res.ok) throw new Error("Error al obtener la reseña");
+  return res.json();
+}
+
+export async function deleteReview(reviewId) {
+  const res = await fetch(`${API}/reviews/delete/${reviewId}`, {
+    method: "DELETE",
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Error al eliminar la reseña");
+  }
+  
+  return res.json();
+}
+
 
 
 

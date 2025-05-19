@@ -1,20 +1,15 @@
 import { Avatar } from "@/components/ui/avatar";
+import { useState } from "react";
 
-export const ReviewCard = ({ review }) => {
-
-//   if (!review || typeof review !== 'object') {
-//     return (
-//       <div className="border-b border-gray-200 py-6 text-gray-500">
-//         Reseña no disponible
-//       </div>
-//     );
-//   }
-
+export const ReviewCard = ({ review, currentUserId, onDelete }) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+  
   // Datos con valores por defecto
   const user = review?.guest || review?.user || {}; 
   const userName = user?.name || 'Usuario anónimo';
-  const rating = Math.min(Math.max(review?.rating || 0, 0), 5); // Asegura entre 0-5
-  const comment = review?.comment || review?.description || 'Sin descripción'; // Compatibilidad con ambos nombres
+  const userId = user?.id || user?._id;
+  const rating = Math.min(Math.max(review?.rating || 0, 0), 5);
+  const comment = review?.comment || review?.description || 'Sin descripción';
   const createdAt = review?.createdAt ? new Date(review.createdAt) : new Date();
 
   // Formateo de fecha
@@ -24,6 +19,28 @@ export const ReviewCard = ({ review }) => {
     day: 'numeric'
   }).format(createdAt);
 
+  // Función para manejar la eliminación
+ const handleDelete = async () => {
+  if (!window.confirm("¿Estás seguro de eliminar esta reseña?")) return;
+  
+  setIsDeleting(true);
+  try {
+    // Pasar el ID correcto (probamos ambos posibles campos)
+    const reviewId = review.id || review._id;
+    if (!reviewId) throw new Error("No se pudo identificar la reseña");
+    
+    await onDelete(reviewId);
+  } catch (error) {
+    console.error("Error en ReviewCard:", {
+      error: error.message,
+      reviewId: review.id || review._id,
+      userId: currentUserId
+    });
+    // No mostrar alert aquí, ya se maneja en handleDeleteReview
+  } finally {
+    setIsDeleting(false);
+  }
+};
   return (
     <article className="border-b border-gray-200 py-6">
       <div className="flex items-start gap-4">
@@ -49,6 +66,17 @@ export const ReviewCard = ({ review }) => {
             <time dateTime={createdAt.toISOString()} className="text-gray-500 text-sm">
               {formattedDate}
             </time>
+            
+            {/* Botón de eliminar (solo visible para el autor) */}
+            {userId === currentUserId && (
+              <button 
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="ml-auto text-red-500 hover:text-red-700 text-sm font-medium"
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar comentario"}
+              </button>
+            )}
           </div>
           
           <div className="flex items-center mt-1">

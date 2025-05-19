@@ -12,7 +12,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { InputSearch } from "../../../../ui/InputSearch";
 import { Spinner } from "../../../../ui/Spinner";
 import Map from "@/components/ui/Map";
-import RatingForm from "@/components/ui/RatingFrom";
+import RatingForm from "@/components/ui/RatingForm";
 
 import { ReviewCard } from "@/components/ui/ReviewCard";
 
@@ -26,10 +26,10 @@ import {
   paymentStripe,
   getUserById,
   getReviewsByProperty,
+  deleteReview
 } from "@/app/api/callApi";
 
-// Importaciones de assets
-import userImage from "../../../public/Perfil.png";
+
 
 const PropertyDetail = () => {
   // Hooks de routing y autenticación
@@ -161,6 +161,43 @@ const PropertyDetail = () => {
       alert("Error al procesar el pago");
     }
   };
+  // Función para manejar la eliminación de reseñas
+const handleDeleteReview = async (reviewId) => {
+  try {
+    // Optimistic update (actualización inmediata antes de la respuesta del servidor)
+    const previousReviews = [...reviews];
+    setReviews(prev => prev.filter(r => 
+      (r.id !== reviewId && r._id !== reviewId)
+    ));
+
+    // Intenta eliminar en el servidor
+    await deleteReview(reviewId);
+
+    // Recalcular promedio
+    const updatedReviews = previousReviews.filter(r => 
+      (r.id !== reviewId && r._id !== reviewId)
+    );
+    
+    if (updatedReviews.length > 0) {
+      const avg = updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length;
+      setAverageRating(avg);
+    } else {
+      setAverageRating(0);
+    }
+    setReviewCount(updatedReviews.length);
+
+  } catch (error) {
+    // Si falla, revertir los cambios
+    setReviews(previousReviews);
+    console.error("Error completo al eliminar:", {
+      message: error.message,
+      reviewId,
+      currentUser: currentUser?.id
+    });
+    alert(`Error al eliminar: ${error.message}`);
+  }
+};
+
 
   return (
     <section className="p-8 space-y-8">
@@ -351,7 +388,7 @@ const PropertyDetail = () => {
 
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
-            <div className="flex font-bold text-xl px-10 gap-20">
+            {/* <div className="flex font-bold text-xl px-10 gap-20">
               <h3 className="text-slate-700">
                 Mejor valorado por los huéspedes
               </h3>
@@ -359,7 +396,7 @@ const PropertyDetail = () => {
                 <small>4.9 ⭐</small>
                 <p>10</p>
               </div>
-            </div>
+            </div> */}
 
             <hr className="h-[1px] bg-slate-400 mx-10" />
 
@@ -408,6 +445,8 @@ const PropertyDetail = () => {
                           <ReviewCard
                             key={review._id || review.id}
                             review={review}
+                            currentUserId={currentUser?.id}
+                            onDelete={handleDeleteReview}
                           />
                         ))}
                       </div>
@@ -422,7 +461,10 @@ const PropertyDetail = () => {
                   </div>
                 </div>
                 <div>
-                  <RatingForm></RatingForm>
+                  <RatingForm
+                    propertyId={currentProperty.id}
+                    guestId={currentUser?.id}
+                  />
                 </div>
 
                 <hr className="bg-slate-400 my-4" />
