@@ -21,6 +21,9 @@ import { ReviewCard } from "@/components/ui/ReviewCard";
 import { useProperties } from "../../../../hooks/useProperties";
 import { useInputSearch } from "../../../../hooks/useInputSearch";
 import { useAuth } from "@/hooks/useAuth";
+// Importaciones de utils
+
+import { countDaysBetweenDates } from "@/utils/dateHelpers";
 
 // Importaciones de API
 import {
@@ -128,14 +131,6 @@ const PropertyDetail = () => {
 
     fetchReviews();
   }, [currentProperty.id]);
-
-  // Funciones auxiliares
-  function countDaysBetweenDates(start, end) {
-    if (!start || !end) return 0;
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    return Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-  }
 
   const handleClickReserve = async () => {
     if (!startDate || !endDate) {
