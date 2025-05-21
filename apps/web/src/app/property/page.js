@@ -8,11 +8,16 @@ import { InputSearch } from "../../ui/InputSearch";
 import { Spinner } from "../../ui/Spinner";
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useBoundStore } from "../../store/bound.store";
+import { FaUsers, FaDollarSign, FaHome, FaTrash, FaFilter, FaSortAmountUp, FaSortAmountDown} from "react-icons/fa";
+import { Tags } from "lucide-react";
+
 
 const INITIAL_FILTERS_VALUES = {
-  minPrice: 0,
-  peopleQuantity: 1,
-  title: ''
+   maxPrice: 0,
+  min_people: 1,
+  title: '',
+  tags: [],
+  sort: ''
 };
 
 const Page = () => {
@@ -31,23 +36,28 @@ const Page = () => {
   useEffect(() => {
     // Actualizar filtros del formulario
     setFilters({
-      minPrice: params.minPrice || INITIAL_FILTERS_VALUES.minPrice,
-      peopleQuantity: params.peopleQuantity || INITIAL_FILTERS_VALUES.peopleQuantity,
-      title: params.title || INITIAL_FILTERS_VALUES.title
+      maxPrice: params.maxPrice || INITIAL_FILTERS_VALUES.maxPrice,
+      min_people: params.min_people || INITIAL_FILTERS_VALUES.min_people,
+      title: params.title || INITIAL_FILTERS_VALUES.title,
+      tags: params.tags ? params.tags.split(',') : INITIAL_FILTERS_VALUES.tags,
+      sort: params.sort || INITIAL_FILTERS_VALUES.sort
     });
 
     // Obtener propiedades con todos los parámetros
     fetchProperties();
   }, [params]); // ¡Ahora depende de params!
 
-  const fetchProperties = async () => {
+ const fetchProperties = async () => {
     await getProperties({
-      address: params.address,  // Asegúrate de incluir address
+      address: params.address,
       startDate: params.startDate,
       endDate: params.endDate,
-      minPrice: params.minPrice,
-      peopleQuantity: params.peopleQuantity,
-      title: params.title
+      maxPrice: params.maxPrice,
+      min_people: params.min_people,
+      title: params.title,
+      tags: params.tags,
+       orderBy: filters.sort === 'price_asc' ? 'ASC' : 
+            filters.sort === 'price_desc' ? 'DES' : undefined
     });
   };
 
@@ -56,10 +66,12 @@ const Page = () => {
     
     // Agregar filtros del formulario
     Object.entries(filters).forEach(([key, value]) => {
-      if (value && value.toString().trim() !== '') {
-        queryParams.set(key, value.toString().toLowerCase());
-      }
-    });
+  if (Array.isArray(value)) {
+    if (value.length > 0) queryParams.set(key, value.join(','));
+  } else if (value && value.toString().trim() !== '') {
+    queryParams.set(key, value.toString().toLowerCase());
+  }
+});
 
     // Mantener los parámetros de búsqueda (address, fechas) si existen
     if (params.address) queryParams.set('address', params.address);
@@ -84,67 +96,141 @@ const Page = () => {
   console.log('Current params:', params);
   return (
     <section className="flex gap-20 p-8">
-      <div className="flex flex-col gap-4 bg-[#5FA77C82] px-6  w-[340px] py-3 rounded-2xl h-fit">
-        <h2 className="text-xl font-semibold text-slate-950">Filtros</h2>
+      <div className="flex flex-col gap-6 bg-[#f1f5f9] px-6 py-5 w-[340px] rounded-2xl shadow-md">
+  <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+    <FaFilter /> Filtros
+  </h2>
 
-        <div className="space-y-2">
-          <label htmlFor="title">Nombre</label>
-          <input
-            className="rounded-md outline-none px-2 shadow-sm border border-slate-200 w-full"
-            type="text"
+   {/* Selector de ordenamiento - NUEVO */}
+        <div className="space-y-1">
+          <label htmlFor="sort" className="font-medium text-slate-800 flex gap-2 items-center">
+            <FaSortAmountDown /> Ordenar por
+          </label>
+          <select
+            name="sort"
+            value={filters.sort}
+            onChange={e => setFilters(prev => ({ ...prev, sort: e.target.value }))}
+            className="rounded-lg px-3 py-1.5 w-full border border-slate-300 focus:ring-2 focus:ring-green-500 outline-none"
+          >
+            <option value="">Predeterminado</option>
+            <option value="price_asc">Precio: Menor a Mayor</option>
+            <option value="price_desc">Precio: Mayor a Menor</option>
+          </select>
+        </div>
+
+        {/* Resto de tus filtros existentes... */}
+        <div className="space-y-1">
+          <label htmlFor="title" className="font-medium text-slate-800 flex gap-2 items-center">
+            <FaHome /> Tipo de propiedad
+          </label>
+          <select
             name="title"
-            value={filters. title ?? ''}
-            onChange={data => setFilters(prev => ({ ...prev, title: data?.target?.value }))}
-          />
+            value={filters.title ?? ''}
+            onChange={e => setFilters(prev => ({ ...prev, title: e.target.value }))}
+            className="rounded-lg px-3 py-1.5 w-full border border-slate-300 focus:ring-2 focus:ring-green-500 outline-none"
+          >
+            <option value="">Todas</option>
+            <option value="casa">Casa</option>
+            <option value="departamento">Departamento</option>
+          </select>
         </div>
 
+  {/* Título */}
+  <div className="space-y-1">
+    <label htmlFor="title" className="font-medium text-slate-800 flex gap-2 items-center">
+  <FaHome /> Tipo de propiedad
+</label>
+<select
+  name="title"
+  value={filters.title ?? ''}
+  onChange={e => setFilters(prev => ({ ...prev, title: e.target.value }))}
+  className="rounded-lg px-3 py-1.5 w-full border border-slate-300 focus:ring-2 focus:ring-green-500 outline-none"
+>
+  <option value="">Todas</option>
+  <option value="casa">Casa</option>
+  <option value="departamento">Departamento</option>
+</select>
 
-        <div className="space-y-2">
-          <label htmlFor="peopleQuantity">Cantidad de personas: {filters.peopleQuantity}</label>
-          <input
-            className="w-full accent-[#318F51]"
-            type="range"
-            name="peopleQuantity"
-            min={1}
-            max={20}
-            value={filters.peopleQuantity ?? 1}
-            onChange={(e) => setFilters(prev => ({
-              ...prev,
-              peopleQuantity: Number(e.target.value)
-            }))}
-          />
-        </div>
+  </div>
 
-       <div className="space-y-2">
-  <label htmlFor="price">Precio Mínimo: ${filters.minPrice || 0}</label>
-  <input
-    className="w-full accent-[#318F51]"
-    type="range"
-    name="minPrice"
-    min={0}
-    max={2000000}
-    value={filters.minPrice || 0}
-    onChange={(e) => setFilters(prev => ({
-      ...prev,
-      minPrice: Number(e.target.value)
-    }))}
-  />
+  {/* Cantidad de personas */}
+  <div className="space-y-1">
+    <label htmlFor="min_people" className="font-medium text-slate-800 flex gap-2 items-center">
+      <FaUsers /> Máximo de personas: <span className="ml-auto font-bold text-green-700">{filters.min_people}</span>
+    </label>
+    <input
+      className="w-full accent-green-600"
+      type="range"
+      min={1}
+      max={20}
+      value={filters.min_people ?? 1}
+      onChange={e => setFilters(prev => ({
+        ...prev,
+        min_people: Number(e.target.value)
+      }))}
+    />
+  </div>
+
+  {/* Precio mínimo */}
+<div className="space-y-1">
+  <label htmlFor="maxPrice" className="font-medium text-slate-800 flex gap-2 items-center">
+    <FaDollarSign /> Precio máx. por noche
+  </label>
+  <select
+    className="rounded-lg px-3 py-1.5 w-full border border-slate-300 focus:ring-2 focus:ring-green-500 outline-none"
+    value={filters.maxPrice}
+    onChange={e => setFilters(prev => ({ ...prev, maxPrice: Number(e.target.value) }))}
+  >
+    <option value={0}>Sin límite</option>
+    <option value={50000}>Hasta $50.000</option>
+    <option value={100000}>Hasta $100.000</option>
+    <option value={200000}>Hasta $200.000</option>
+    <option value={500000}>Hasta $500.000</option>
+    <option value={1000000}>Hasta $1.000.000</option>
+  </select>
 </div>
-        <button
-          onClick={handleClickFilter}
-          className="bg-[#5FA77C82] py-1 rounded-2xl w-fit px-8 font-semibold text-slate-100 shadow-sm border border-slate-200 hover:cursor-pointer hover:bg-[#5FA77C82]/70 m-auto"
-        >
-          Filtrar
-        </button>
+{/* Tags */}
+<div className="space-y-1">
+  <label className="font-medium text-slate-800 flex gap-2 items-center">
+    🏷️ Etiquetas
+  </label>
+  <div className="flex flex-wrap gap-2">
+    {['wifi', 'pileta', 'pet-friendly', 'aire-acondicionado', 'estacionamiento'].map(tag => (
+      <label key={tag} className="flex items-center gap-2 text-sm bg-white px-3 py-1.5 rounded-lg border border-slate-300 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={filters.tags.includes(tag)}
+          onChange={e => {
+            const updatedTags = e.target.checked
+              ? [...filters.tags, tag]
+              : filters.tags.filter(t => t !== tag);
+            setFilters(prev => ({ ...prev, tags: updatedTags }));
+          }}
+        />
+        {tag}
+      </label>
+    ))}
+  </div>
+</div>
 
-        {/* Remove filters */}
-        <button
-          onClick={handleClickRemoveFilters}
-          className="bg-[#5FA77C82] py-1 rounded-2xl w-fit px-2 font-semibold text-slate-100 shadow-sm border border-slate-200 hover:cursor-pointer hover:bg-[#5FA77C82]/70 m-auto"
-        >
-          Limpiar filtros
-        </button>
-      </div>
+
+  {/* Botones */}
+  <div className="flex flex-col gap-2 mt-4">
+    <button
+      onClick={handleClickFilter}
+      className="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-semibold transition-colors"
+    >
+      Aplicar filtros
+    </button>
+
+    <button
+      onClick={handleClickRemoveFilters}
+      className="text-red-500 hover:underline flex justify-center items-center gap-2"
+    >
+      <FaTrash /> Limpiar filtros
+    </button>
+  </div>
+</div>
 
       <div className="flex flex-col gap-10 justify-center items-center w-full h-full">
         <InputSearch />

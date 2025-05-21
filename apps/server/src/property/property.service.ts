@@ -45,7 +45,7 @@ export class PropertyService {
   }
 
   async findAll(params: PropertyParamsDto) {
-    const { title, minPrice, maxPrice, tags, orderBy, address } = params;
+    const { title, minPrice, maxPrice, tags, orderBy, address, min_people } = params;
 
     // Inicializar el filtro vacío
     const filters: any = {};
@@ -54,6 +54,13 @@ export class PropertyService {
     if (title) {
       filters.title = { $regex: title, $options: 'i' }; // Búsqueda insensible a mayúsculas/minúsculas
     }
+
+
+    // Filtro por cantidad de personas
+
+    if (min_people !== undefined) {
+  filters.max_people = { $gte: min_people };
+}
 
     // Filtro por rango de precios
     if (minPrice !== undefined || maxPrice !== undefined) {
@@ -88,13 +95,12 @@ export class PropertyService {
     let query = this.propertyModel.find(filters);
     
     // Ordenar
-    if (orderBy) {
-      const sortOrder = orderBy === 'ASC' ? 1 : -1;
-      query = query.sort({ createdAt: sortOrder });
-    } else {
-      query = query.sort({ createdAt: 1 });
-    }
-    
+     if (params.orderBy) {
+    const sortOrder = params.orderBy === 'ASC' ? 1 : -1;
+    query = query.sort({ price: sortOrder }); // Ordenar por precio en lugar de createdAt
+  } else {
+    query = query.sort({ createdAt: 1 }); // Orden por defecto
+  }
 
     return await query.exec(); // Ejecutar la consulta con exec()
   }

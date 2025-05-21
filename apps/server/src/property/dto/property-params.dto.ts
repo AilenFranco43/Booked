@@ -50,4 +50,11 @@ export class PropertyParamsDto {
   @IsOptional()
   @IsString()
   address: string;
+
+ @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  min_people: number;
+
+  
 }
