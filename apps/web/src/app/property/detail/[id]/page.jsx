@@ -229,19 +229,28 @@ const PropertyDetail = () => {
                 startDate={startDate}
                 endDate={endDate}
                 onChange={(update) => {
-                  const [start, end] = update;
-                  setDateRange({
-                    startDate: start,
-                    endDate: end,
-                  });
+                  if (currentUser) {
+                    const [start, end] = update;
+                    setDateRange({
+                      startDate: start,
+                      endDate: end,
+                    });
+                  } else {
+                    router.push("/register");
+                  }
                 }}
                 minDate={new Date()}
-                placeholderText="Check-in → Check-out"
+                placeholderText={
+                  currentUser
+                    ? "Check-in → Check-out"
+                    : "Regístrate para seleccionar fechas"
+                }
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
                 dateFormat="dd/MM/yyyy"
                 isClearable
                 monthsShown={2}
                 shouldCloseOnSelect={false}
+                disabled={!currentUser}
               />
               {startDate && endDate && (
                 <p className="text-sm text-gray-600">
@@ -253,11 +262,14 @@ const PropertyDetail = () => {
 
             <div>
               <label htmlFor="">Huéspedes: {selectedPeopleQuantity}</label>
+              <p className="text-sm text-gray-600">
+                Máximo: {currentProperty.max_people} personas
+                </p>
               <input
                 type="range"
                 name="peopleQuantity"
                 min={1}
-                max={20}
+                max={currentProperty.max_people}
                 className="w-full accent-[#318F51]"
                 onChange={(data) =>
                   setSelectedPeopleQuantity(data.target.value)
@@ -267,11 +279,15 @@ const PropertyDetail = () => {
             </div>
 
             <button
-              onClick={handleClickReserve}
+              onClick={
+                currentUser
+                  ? handleClickReserve
+                  : () => router.push("/register")
+              }
               className="bg-[#318F51] py-2 rounded-lg w-full font-semibold text-slate-100 hover:bg-[#5FA77C82]/70 transition-colors"
               disabled={!startDate || !endDate}
             >
-              Reservar
+              {currentUser ? "Reservar" : "Regístrate para reservar"}
             </button>
 
             <div className="text-center">
