@@ -124,11 +124,36 @@ export const useProperties = () => {
     }
   }
 
+// useProperties hook
+const getUniqueCities = async () => {
+  setIsLoading(true);
+  setError(null);
   
+  try {
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/property/cities/unique`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
 
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    setError(err.message);
+    throw err;
+  } finally {
+    setIsLoading(false);
+  }
+}
 
 
   return {
+    getUniqueCities,
     getProperties,
     getUserProperties,
     deleteProperty,

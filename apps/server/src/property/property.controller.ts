@@ -106,4 +106,16 @@ export class PropertyController {
   ): Promise<Property> {
     return this.propertyService.update(propertyId, updatePropertyDto);
   }
+
+ // Obtener ciudades
+@ApiOperation({ summary: 'Get all unique cities from properties' })
+@ApiResponse({ 
+  status: 200, 
+  description: 'Returns array of unique cities',
+  type: [String]
+})
+@Get('cities/unique')
+async getUniqueCities(): Promise<string[]> {
+  return this.propertyService.getUniqueCities();
+}
 }

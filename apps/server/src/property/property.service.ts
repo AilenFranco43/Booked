@@ -144,4 +144,21 @@ export class PropertyService {
 
     return property;
   }
+  // Obtener ciudades
+  async getUniqueCities(): Promise<string[]> {
+    const properties = await this.propertyModel.find({}).exec();
+    const cities = new Set<string>();
+    
+    properties.forEach(property => {
+      const addressParts = property.address?.split(',') || [];
+      if (addressParts.length >= 3) {
+        const city = addressParts[addressParts.length - 2].trim();
+        if (city && !city.includes('Ciudad no disponible')) {
+          cities.add(city);
+        }
+      }
+    });
+    
+    return Array.from(cities).sort();
+  }
 }
