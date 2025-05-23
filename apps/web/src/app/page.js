@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { GridProperties } from '../components/GridProperties'
 import { useProperties } from '../hooks/useProperties'
 import { Banner } from '../ui/Banner'
@@ -10,6 +10,8 @@ import saltaImage from './public/salta.png'
 import mendozaImage from './public/mendoza.png'
 import buenoAiresImage from './public/buenosaires.png'
 import Image from 'next/image'
+import { FaStar } from 'react-icons/fa'; 
+
 
 const TOP_SEARCH = [
   {
@@ -43,9 +45,14 @@ const extractCityFromAddress = (address) => {
 
 const Page = () => {
   const { getProperties, isLoading, properties } = useProperties()
+  const [topRatedProperties, setTopRatedProperties] = useState([])
 
   useEffect(() => {
-    getProperties()
+    // Obtener solo 4 propiedades mejor calificadas
+    getProperties({ 
+      sortByRating: 'desc',
+      limit: 4
+    })
   }, [])
 
   const destinationsWithCount = useMemo(() => {
@@ -74,39 +81,14 @@ const Page = () => {
     <div className='space-y-20'>
       <section>
         <Banner />
-
-        <div className='px-8 max-w-[1400px] m-auto'>
-          <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">Destinos populares</h2>
-
-          {(properties.length > 0 && !isLoading) && <GridProperties properties={properties} />}
-          {isLoading && <Spinner />}
-        </div>
       </section>
 
-      <section className='px-8 max-w-[1400px] mx-auto'>
-        <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">
-          Encontra los mejores alojamientos en los destinos más buscados
-        </h2>
-
-        <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4'>
-          {destinationsWithCount?.map((place, index) => (
-            <div 
-              key={index} 
-              className="border-x border-b border-slate-700 rounded-2xl overflow-hidden shadow-lg transition-transform transform hover:scale-105 hover:cursor-pointer w-80 relative"
-            >
-              <Image
-                src={place.href}
-                width={500}
-                height={500}
-                alt={`Destino ${place.title}`}
-                className="object-cover h-96"
-              />
-              <div className='p-4 absolute bottom-0 text-slate-50'>
-                <h3 className="text-2xl font-bold">{place.title}</h3>
-                <strong>{place.subTitle}</strong>
-              </div>
-            </div>
-          ))}
+      <section className='px-8 max-w-[1400px] m-auto'>
+       
+        <div className='px-8 max-w-[1400px] m-auto'>
+          <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">Destinos populares</h2>
+          {(properties.length > 0 && !isLoading) && <GridProperties properties={properties} />}
+          {isLoading && <Spinner />}
         </div>
       </section>
 

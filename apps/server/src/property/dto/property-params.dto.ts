@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsArray, IsOptional, IsIn } from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, IsIn, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -62,4 +62,15 @@ export class PropertyParamsDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortByRating?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({
+    example: 4,
+    description: 'Limit the number of results returned',
+    type: Number
+  })
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  limit?: number;
 }

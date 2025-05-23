@@ -8,41 +8,54 @@ export const useProperties = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const getProperties = async (inputQueryParams = {}) => {
-    setIsLoading(true)
-    setError(null)
+ const getProperties = async (inputQueryParams = {}) => {
+  setIsLoading(true);
+  setError(null);
+  
+  try {
+    const queryParams = new URLSearchParams();
     
-    try {
-      const queryParams = new URLSearchParams()
-      
-      Object.entries(inputQueryParams).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          queryParams.append(key, value.toString())
-        }
-      })
-
-      const token = localStorage.getItem('token')
-      const response = await fetch(`${API}/property?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-
-      const data = await response.json()
-      setProperties(data)
-      return data
-    } catch (err) {
-      setError(err.message)
-      setProperties([])
-      throw err
-    } finally {
-      setIsLoading(false)
+    // Añade sortByRating si no está presente
+    if (!inputQueryParams.sortByRating && inputQueryParams.orderBy) {
+      inputQueryParams.sortByRating = inputQueryParams.orderBy === 'ASC' ? 'asc' : 'desc';
     }
+
+    Object.entries(inputQueryParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API}/property?${queryParams.toString()}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    // Asegúrate que cada propiedad tenga los campos de rating
+    const propertiesWithRatings = data.map(property => ({
+      ...property,
+      averageRating: property.averageRating || 0,
+      reviewCount: property.reviewCount || 0
+    }));
+
+    setProperties(propertiesWithRatings);
+    return propertiesWithRatings;
+  } catch (err) {
+    setError(err.message);
+    setProperties([]);
+    throw err;
+  } finally {
+    setIsLoading(false);
   }
+};
 
   const getUserProperties = async () => {
     setIsLoading(true)
