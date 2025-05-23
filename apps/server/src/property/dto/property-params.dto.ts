@@ -42,19 +42,24 @@ export class PropertyParamsDto {
   orderBy: Orders;
 
   @ApiPropertyOptional({
-    example:
-      '5886, Soler, Palermo Hollywood, Buenos Aires, Buenos Aires, Distrito Audiovisual, C1414CWA, Argentina',
+    example: '5886, Soler, Palermo Hollywood, Buenos Aires, Argentina',
     description: 'The address must be detailed',
-    type: [String],
   })
   @IsOptional()
   @IsString()
   address: string;
 
- @Type(() => Number)
+  @Type(() => Number)
   @IsOptional()
   @IsNumber()
   min_people: number;
 
-  
+  @ApiPropertyOptional({
+    example: 'desc',
+    description: 'Sort by average rating (asc or desc)',
+    enum: ['asc', 'desc'],
+  })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortByRating?: 'asc' | 'desc';
 }

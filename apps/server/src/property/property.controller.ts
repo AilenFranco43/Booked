@@ -22,6 +22,8 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/users/entities/user.entity';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, PipelineStage } from 'mongoose';
 
 @ApiTags('property')
 @Controller('property')
@@ -29,6 +31,7 @@ export class PropertyController {
   constructor(
     private readonly imageService: ImageService,
     private readonly propertyService: PropertyService,
+    @InjectModel(Property.name) private propertyModel: Model<Property>
   ) {}
 
   @ApiOperation({ summary: 'Find all properties' })
@@ -36,6 +39,9 @@ export class PropertyController {
   @ApiResponse({ status: 404, description: 'No properties found' })
   @Get()
   async findAll(@Query() filterQuery: PropertyParamsDto) {
+    if (filterQuery.sortByRating) {
+      return await this.propertyService.findAllWithAverageRating(filterQuery);
+    }
     return await this.propertyService.findAll(filterQuery);
   }
 
@@ -80,18 +86,11 @@ export class PropertyController {
     return this.propertyService.create(propertyData, userId);
   }
 
-  @ApiOperation({ summary: 'Get property by id' })
-  @ApiResponse({ status: 200, description: 'Returns a property success' })
-  @ApiResponse({ status: 404, description: 'Property not found' })
-  @Get('get/:id')
-  async findOneById(@Param('id') id: string) {
-    return this.propertyService.findOneById(id);
-  }
   @ApiOperation({ summary: 'Delete property by id' })
   @ApiResponse({ status: 200, description: 'Deleted property success' })
   @Delete('delete/:id')
   @UseGuards(AuthGuard('jwt'))
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id', ObjectIdValidationPipe) id: string) {
     return this.propertyService.remove(id);
   }
 
@@ -107,15 +106,24 @@ export class PropertyController {
     return this.propertyService.update(propertyId, updatePropertyDto);
   }
 
- // Obtener ciudades
-@ApiOperation({ summary: 'Get all unique cities from properties' })
-@ApiResponse({ 
-  status: 200, 
-  description: 'Returns array of unique cities',
-  type: [String]
-})
-@Get('cities/unique')
-async getUniqueCities(): Promise<string[]> {
-  return this.propertyService.getUniqueCities();
-}
+  @ApiOperation({ summary: 'Get all unique cities from properties' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns array of unique cities',
+    type: [String],
+  })
+  @Get('cities/unique')
+  async getUniqueCities(): Promise<string[]> {
+    return this.propertyService.getUniqueCities();
+  }
+
+  @ApiOperation({ summary: 'DEBUG - Test rating aggregation' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Returns test data for rating aggregation' 
+  })
+  @Get('debug/rating-test')
+  async debugRatingTest() {
+    return this.propertyService.debugRatingTest();
+  }
 }

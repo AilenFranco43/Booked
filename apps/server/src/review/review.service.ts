@@ -1,80 +1,175 @@
-import { Injectable , NotFoundException,} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
-import { InjectModel } from '@nestjs/mongoose';
 import { Review } from './entities/review.entity';
-import { User } from '../users/entities/user.entity'
-import { Property } from '../property/entities/property.entity'
-import { Model } from 'mongoose';
+import { User } from '../users/entities/user.entity';
+import { Property } from '../property/entities/property.entity';
 
 @Injectable()
 export class ReviewService {
-constructor(
-@InjectModel(Review.name) private reviewModel: Model<Review>,
-@InjectModel(User.name) private userModel: Model<User>,
-@InjectModel(Property.name) private propertyModel: Model<Property>
-
-) {}
+  constructor(
+    @InjectModel(Review.name) private reviewModel: Model<Review>,
+    @InjectModel(User.name) private userModel: Model<User>,
+    @InjectModel(Property.name) private propertyModel: Model<Property>
+  ) {}
 
   async create(createReviewDto: CreateReviewDto) {
-    const { property, guest, rating, comment } =
-    createReviewDto;
+    // Convertir IDs a ObjectId
+    const propertyId = new Types.ObjectId(createReviewDto.property);
+    const guestId = new Types.ObjectId(createReviewDto.guest);
 
-    const propertyExist = await this.propertyModel.findById(property).exec();
-    if(!propertyExist){
-      throw new NotFoundException(`Property with ID ${property} not found`)
+    // Verificar existencia
+    const [propertyExist, userExist] = await Promise.all([
+      this.propertyModel.findById(propertyId).exec(),
+      this.userModel.findById(guestId).exec()
+    ]);
+
+    if (!propertyExist) {
+      throw new NotFoundException(`Property with ID ${createReviewDto.property} not found`);
     }
-
-    const userExist = await this.userModel.findById(guest).exec();
-    if(!userExist){
-      throw new NotFoundException(`User with ID ${guest} not found`)
+    if (!userExist) {
+      throw new NotFoundException(`User with ID ${createReviewDto.guest} not found`);
     }
 
     const newReview = new this.reviewModel({
-      property,  
-      guest,
-      rating,
-      comment,
+      ...createReviewDto,
+      property: propertyId,
+      guest: guestId
     });
 
-    return newReview.save();
+    await newReview.save();
+    
+    // Actualizar rating promedio de la propiedad
+    await this.updatePropertyRating(propertyId);
+    
+    return newReview;
+  }
+
+  private async updatePropertyRating(propertyId: Types.ObjectId) {
+    const result = await this.reviewModel.aggregate([
+      { $match: { property: propertyId } },
+      { $group: { _id: null, avgRating: { $avg: '$rating' } } }
+    ]).exec();
+
+    if (result.length > 0) {
+      await this.propertyModel.findByIdAndUpdate(
+        propertyId,
+        { $set: { averageRating: result[0].avgRating } },
+        { new: true }
+      ).exec();
+    }
   }
 
   async findAll() {
-    return this.reviewModel.find().exec();
+    return this.reviewModel.find()
+      .populate('guest', 'name email')
+      .populate('property', 'title')
+      .exec();
   }
 
   async findByProperty(propertyId: string) {
-    const reviews = await this.reviewModel
-      .find({ property: propertyId })
+    const objectId = new Types.ObjectId(propertyId);
+    const reviews = await this.reviewModel.find({ property: objectId })
       .populate('guest', 'name')
       .exec();
-  
-    if (!reviews || reviews.length === 0) {
+
+    if (!reviews.length) {
       throw new NotFoundException(`No reviews found for property with ID ${propertyId}`);
     }
-  
-    // Calcular el rating promedio
+
     const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
-  
+    
     return {
       reviews,
-      averageRating,
+      averageRating: parseFloat(averageRating.toFixed(2)),
       count: reviews.length
     };
   }
 
   async findOne(id: string) {
-    return this.reviewModel.findById(id).exec();
+    const review = await this.reviewModel.findById(id)
+      .populate('guest', 'name')
+      .populate('property', 'title address')
+      .exec();
+    
+    if (!review) {
+      throw new NotFoundException(`Review with ID ${id} not found`);
+    }
+    
+    return review;
   }
 
   async update(id: string, updateReviewDto: UpdateReviewDto) {
-    return this.reviewModel
-      .findByIdAndUpdate(id, updateReviewDto, { new: true })
+    const updateData: any = { ...updateReviewDto };
+    
+    // Convertir IDs si están presentes
+    if (updateReviewDto.property) {
+      updateData.property = new Types.ObjectId(updateReviewDto.property);
+    }
+    if (updateReviewDto.guest) {
+      updateData.guest = new Types.ObjectId(updateReviewDto.guest);
+    }
+
+    const updatedReview = await this.reviewModel
+      .findByIdAndUpdate(id, updateData, { new: true })
       .exec();
+
+    if (!updatedReview) {
+      throw new NotFoundException(`Review with ID ${id} not found`);
+    }
+
+    // Actualizar rating si cambió
+    if (updateReviewDto.rating !== undefined) {
+      await this.updatePropertyRating(updatedReview.property);
+    }
+
+    return updatedReview;
   }
 
   async remove(id: string) {
-    return this.reviewModel.findByIdAndDelete(id).exec();
+    const review = await this.reviewModel.findByIdAndDelete(id).exec();
+    
+    if (!review) {
+      throw new NotFoundException(`Review with ID ${id} not found`);
+    }
+
+    // Actualizar rating de la propiedad
+    await this.updatePropertyRating(review.property);
+    
+    return review;
+  }
+
+  // Método para migrar datos existentes (ejecutar una sola vez)
+  async migrateData() {
+    const reviews = await this.reviewModel.find({
+      $or: [
+        { property: { $type: 'string' } },
+        { guest: { $type: 'string' } }
+      ]
+    }).exec();
+
+    const updates = reviews.map(review => ({
+      updateOne: {
+        filter: { _id: review._id },
+        update: {
+          $set: {
+            ...(typeof review.property === 'string' && { 
+              property: new Types.ObjectId(review.property) 
+            }),
+            ...(typeof review.guest === 'string' && { 
+              guest: new Types.ObjectId(review.guest) 
+            })
+          }
+        }
+      }
+    }));
+
+    if (updates.length > 0) {
+      await this.reviewModel.bulkWrite(updates);
+    }
+
+    return { migrated: updates.length };
   }
 }

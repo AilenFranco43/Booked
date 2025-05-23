@@ -5,21 +5,25 @@ import { ImageService } from './image.service';
 import { PropertyController } from './property.controller';
 import { Property, PropertySchema } from './entities/property.entity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { CloudinaryService } from '../cloudinary/cloudinary.service'; // Asegúrate de importar el CloudinaryService
+import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { ReviewModule } from '../review/review.module'; 
+import { Review, ReviewSchema } from '../review/entities/review.entity';
 
 @Module({
   imports: [
     ConfigModule,
+    ReviewModule, 
     MongooseModule.forFeature([
       { name: Property.name, schema: PropertySchema },
+      { name: Review.name, schema: ReviewSchema },
     ]),
   ],
   controllers: [PropertyController],
   providers: [
     PropertyService,
     ImageService,
-    CloudinaryService, // Inyecta directamente el servicio de Cloudinary
+    CloudinaryService,
   ],
-  exports: [PropertyService], // Exporta PropertyService para usarlo en otros módulos
+  exports: [PropertyService],
 })
 export class PropertyModule {}
