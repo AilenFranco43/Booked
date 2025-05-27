@@ -10,7 +10,8 @@ import saltaImage from './public/salta.png'
 import mendozaImage from './public/mendoza.png'
 import buenoAiresImage from './public/buenosaires.png'
 import Image from 'next/image'
-import { FaStar } from 'react-icons/fa'; 
+// import { FaStar } from 'react-icons/fa'; 
+import {FaChevronDown, FaChevronUp } from 'react-icons/fa'
 
 
 const TOP_SEARCH = [
@@ -31,6 +32,53 @@ const TOP_SEARCH = [
     href: mendozaImage,
   }
 ]
+const FAQS = [
+  {
+    question: "¿Puedo reservar sin registrarme?",
+    answer: "No, es necesario crear una cuenta para realizar reservas. El registro es rápido y gratuito, y te permite gestionar tus reservas fácilmente."
+  },
+  {
+    question: "¿Cuál es la política de cancelación?",
+    answer: "La política de cancelación varía según cada propiedad. Puedes consultar los términos específicos en la página de cada alojamiento antes de reservar."
+  },
+  {
+    question: "¿Cómo puedo contactar al anfitrión?",
+    answer: "Una vez realizada la reserva, tendrás acceso a los datos de contacto del anfitrión a través de tu panel de usuario."
+  },
+  // {
+  //   question: "¿Qué métodos de pago aceptan?",
+  //   answer: "Aceptamos todas las tarjetas de crédito y débito principales, además de transferencias bancarias y Mercado Pago."
+  // },
+  {
+    question: "¿Hay cargos adicionales?",
+    answer: "Todos los cargos deben estar especificados en el detalle de la reserva. Algunas propiedades pueden requerir un depósito de seguridad que será reembolsable."
+  },
+  {
+    question: "¿Puedo modificar mi reserva?",
+    answer: "Las modificaciones dependen de la disponibilidad y la política de la propiedad. Puedes solicitar cambios contactando al anfitrión directamente."
+  }
+]
+const FaqItem = ({ question, answer }) => {
+  const [isOpen, setIsOpen] = useState(false)
+
+  return (
+    <div className="border-b border-gray-200 py-4">
+      <button
+        className="flex justify-between items-center w-full text-left font-medium text-lg text-gray-800 hover:text-blue-600 focus:outline-none"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <span>{question}</span>
+        {isOpen ? <FaChevronUp className="text-blue-500" /> : <FaChevronDown className="text-blue-500" />}
+      </button>
+      {isOpen && (
+        <div className="mt-2 text-gray-600">
+          <p>{answer}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 
 const extractCityFromAddress = (address) => {
   if (!address) return 'Ciudad no disponible'
@@ -95,20 +143,20 @@ const Page = () => {
       <section className='px-8 max-w-[1400px] m-auto'>
         <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">Preguntas frecuentes</h2>
 
-        <div className='grid grid-cols-2 gap-4 max-w-[1000px] m-auto'>
-          {
-            Array(4).fill(null).map((_, index) => (
-              <div key={index} className='flex gap-4 justify-between items-center bg-slate-100 border border-slate-200 shadow-md p-4 rounded-2xl'>
-                <p>¿Puedo reservar sin registrarme?</p>
-
-                <svg width="25" height="25" viewBox="0 0 37 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="18.5" cy="19" r="18.5" fill="#111111" />
-                  <path d="M24.5647 14.6371L18.3854 20.6705L12.3385 14.5043L10.4402 16.3618L18.3444 24.4396L26.4222 16.5354L24.5647 14.6371Z" fill="#F9F9F9" />
-                </svg>
-
-              </div>
-            ))
-          }
+        <div className="bg-white rounded-xl shadow-md p-8 max-w-4xl mx-auto">
+          <div className="space-y-4">
+            {FAQS.map((faq, index) => (
+              <FaqItem key={index} question={faq.question} answer={faq.answer} />
+            ))}
+          </div>
+          
+          <div className="mt-12 bg-blue-50 rounded-lg p-6">
+            <h3 className="text-xl font-semibold text-blue-800 mb-4">¿No encontraste lo que buscabas?</h3>
+            <p className="text-gray-700 mb-4">Nuestro equipo de atención al cliente está disponible para ayudarte.</p>
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
+              Contactar soporte
+            </button>
+          </div>
         </div>
       </section>
     </div>
