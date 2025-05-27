@@ -15,10 +15,10 @@ export class PropertyService {
     @InjectModel(Review.name) private reviewModel: Model<Review>,
   ) {}
 
-  async create(createPropertyDto: CreatePropertyDto, userId: User): Promise<Property> {
+  async create(createPropertyDto: CreatePropertyDto, user: User): Promise<Property> {
     const newProperty = new this.propertyModel({
       ...createPropertyDto,
-      userId: userId
+      userId: user._id, // Asegúrate de usar user._id si es un Document
     });
     return newProperty.save();
   }
@@ -26,19 +26,23 @@ export class PropertyService {
   async findAll(params: PropertyParamsDto) {
     const filters = this.buildFilters(params);
     let query = this.propertyModel.find(filters);
-    
+
     if (params.orderBy) {
       const sortOrder = params.orderBy === 'ASC' ? 1 : -1;
       query = query.sort({ price: sortOrder });
     } else {
-      query = query.sort({ createdAt: 1 });
+      query = query.sort({ createdAt: -1 });
+    }
+
+    if (params.limit) {
+      query = query.limit(params.limit);
     }
 
     return await query.exec();
   }
 
   async findAllWithAverageRating(params: PropertyParamsDto) {
-    const { sortByRating, ...filterParams } = params;
+    const { sortByRating, limit, ...filterParams } = params;
     const pipeline: PipelineStage[] = [
       {
         $lookup: {
@@ -60,7 +64,9 @@ export class PropertyService {
           reviewCount: { $size: '$reviews' }
         }
       },
-      { $match: this.buildFilters(filterParams) }
+      {
+        $match: this.buildFilters(filterParams)
+      }
     ];
 
     if (sortByRating) {
@@ -70,6 +76,12 @@ export class PropertyService {
           reviewCount: -1
         }
       });
+    } else {
+      pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    if (limit) {
+      pipeline.push({ $limit: limit });
     }
 
     return this.propertyModel.aggregate(pipeline).exec();
@@ -91,14 +103,14 @@ export class PropertyService {
           reviewCount: { $size: '$reviews' }
         }
       },
-      { 
-        $sort: { 
-          averageRating: -1 as const,
-          reviewCount: -1 as const 
-        } 
+      {
+        $sort: {
+          averageRating: -1,
+          reviewCount: -1
+        }
       },
       { $limit: 5 },
-      { 
+      {
         $project: {
           title: 1,
           averageRating: 1,
@@ -111,9 +123,9 @@ export class PropertyService {
     return this.propertyModel.aggregate(testPipeline).exec();
   }
 
-  private buildFilters(params: Omit<PropertyParamsDto, 'sortByRating'>): any {
+  private buildFilters(params: Omit<PropertyParamsDto, 'sortByRating' | 'limit'>): any {
     const filters: any = {};
-    
+
     if (params.title) {
       filters.title = { $regex: params.title, $options: 'i' };
     }
@@ -175,7 +187,7 @@ export class PropertyService {
   async getUniqueCities(): Promise<string[]> {
     const properties = await this.propertyModel.find({}).exec();
     const cities = new Set<string>();
-    
+
     properties.forEach(property => {
       const addressParts = property.address?.split(',') || [];
       if (addressParts.length >= 3) {
@@ -185,7 +197,7 @@ export class PropertyService {
         }
       }
     });
-    
+
     return Array.from(cities).sort();
   }
 }
