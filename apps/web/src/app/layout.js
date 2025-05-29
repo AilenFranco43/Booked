@@ -2,6 +2,7 @@ import "./globals.css";
 
 import { Roboto } from "next/font/google";
 import { Header } from "../ui/Header";
+import { FloatingBackButton } from "@/components/FloatingBackButton";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -21,6 +22,7 @@ export default function RootLayout({ children }) {
 
         <main className="min-h-screen mb-20">
           {children}
+           <FloatingBackButton />
         </main>
 
         <footer className='bg-[#5FA777] h-30 pt-40' />

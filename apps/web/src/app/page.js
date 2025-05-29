@@ -45,10 +45,6 @@ const FAQS = [
     question: "¿Cómo puedo contactar al anfitrión?",
     answer: "Una vez realizada la reserva, tendrás acceso a los datos de contacto del anfitrión a través de tu panel de usuario."
   },
-  // {
-  //   question: "¿Qué métodos de pago aceptan?",
-  //   answer: "Aceptamos todas las tarjetas de crédito y débito principales, además de transferencias bancarias y Mercado Pago."
-  // },
   {
     question: "¿Hay cargos adicionales?",
     answer: "Todos los cargos deben estar especificados en el detalle de la reserva. Algunas propiedades pueden requerir un depósito de seguridad que será reembolsable."
@@ -62,17 +58,21 @@ const FaqItem = ({ question, answer }) => {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="border-b border-gray-200 py-4">
+    <div className={`border-b border-gray-100 py-5 transition-all duration-200 ${isOpen ? 'bg-gray-50 rounded-lg px-4 -mx-4' : ''}`}>
       <button
-        className="flex justify-between items-center w-full text-left font-medium text-lg text-gray-800 hover:text-blue-600 focus:outline-none"
+        className="flex justify-between items-center w-full text-left font-medium text-lg text-gray-800 hover:text-[#5FA777] focus:outline-none"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span>{question}</span>
-        {isOpen ? <FaChevronUp className="text-blue-500" /> : <FaChevronDown className="text-blue-500" />}
+        <span className="text-left pr-4">{question}</span>
+        {isOpen ? (
+          <FaChevronUp className="text-[#5FA777] shrink-0 ml-2" />
+        ) : (
+          <FaChevronDown className="text-gray-500 shrink-0 ml-2" />
+        )}
       </button>
       {isOpen && (
-        <div className="mt-2 text-gray-600">
-          <p>{answer}</p>
+        <div className="mt-3 text-gray-600 pl-2 animate-fadeIn">
+          <p className="leading-relaxed">{answer}</p>
         </div>
       )}
     </div>
@@ -133,29 +133,38 @@ const Page = () => {
 
       <section className='px-8 max-w-[1400px] m-auto'>
        
-        <div className='px-8 max-w-[1400px] m-auto'>
-          <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">Destinos populares</h2>
+        <div className='px-2 max-w-[1400px] m-auto'>
+          <h2 className="font-roboto text-3xl text-slate-700 font-bold py-4">Destinos populares</h2>
           {(properties.length > 0 && !isLoading) && <GridProperties properties={properties} />}
           {isLoading && <Spinner />}
         </div>
       </section>
 
-      <section className='px-8 max-w-[1400px] m-auto'>
-        <h2 className="font-roboto text-3xl text-slate-700 font-bold py-14">Preguntas frecuentes</h2>
+       <section className='px-4 sm:px-8 max-w-[1400px] mx-auto'>
+        <div className="text-center mb-12">
+          <h2 className="font-bold text-3xl md:text-4xl text-gray-800 mb-4">Preguntas Frecuentes</h2>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            Encuentra respuestas a las dudas más comunes sobre nuestros servicios
+          </p>
+        </div>
 
-        <div className="bg-white rounded-xl shadow-md p-8 max-w-4xl mx-auto">
-          <div className="space-y-4">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden max-w-4xl mx-auto">
+          <div className="p-6 md:p-8 space-y-4">
             {FAQS.map((faq, index) => (
               <FaqItem key={index} question={faq.question} answer={faq.answer} />
             ))}
           </div>
           
-          <div className="mt-12 bg-blue-50 rounded-lg p-6">
-            <h3 className="text-xl font-semibold text-blue-800 mb-4">¿No encontraste lo que buscabas?</h3>
-            <p className="text-gray-700 mb-4">Nuestro equipo de atención al cliente está disponible para ayudarte.</p>
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition duration-200">
-              Contactar soporte
-            </button>
+          <div className="bg-[#f7faf7] border-t border-gray-100 p-6 md:p-8">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">¿Necesitas más ayuda?</h3>
+                <p className="text-gray-600">Estamos aquí para responder cualquier pregunta que tengas.</p>
+              </div>
+              <button className="bg-[#5FA777] hover:bg-[#4a8a5f] text-white font-medium py-3 px-6 rounded-lg transition duration-200 whitespace-nowrap">
+                Contactar al soporte
+              </button>
+            </div>
           </div>
         </div>
       </section>

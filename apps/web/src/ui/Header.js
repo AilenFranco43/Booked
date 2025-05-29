@@ -106,22 +106,26 @@ export const Header = () => {
           </DropdownMenu>
         )}
 
-        {status === USER_STATE.UNVERIFIED && (
-          <div className="w-1/8 flex gap-7">
-            <Link
-              href={"/auth/login"}
-              className="px-5 py-2 bg-white text-[#5FA777] rounded-xl"
-            >
-              Login
-            </Link>
-            <Link
-              href={"/auth/register"}
-              className="px-5 py-2 bg-white text-[#5FA777] rounded-xl"
-            >
-              Register
-            </Link>
-          </div>
-        )}
+       {status === USER_STATE.UNVERIFIED && (
+  <div className="flex gap-4">
+    <Link
+      href={"/auth/login"}
+      className="px-6 py-2 bg-white text-[#5FA777] rounded-lg font-medium 
+                hover:bg-[#4a8a5f] hover:text-white transition-colors duration-300 
+                shadow-md hover:shadow-lg transform hover:scale-105"
+    >
+      Iniciar sesión
+    </Link>
+    <Link
+      href={"/auth/register"}
+      className="px-6 py-2 bg-[#318F51] text-white rounded-lg font-medium
+                hover:bg-[#2a7a45] transition-colors duration-300
+                shadow-md hover:shadow-lg transform hover:scale-105"
+    >
+      Registrarse
+    </Link>
+  </div>
+)}
       </div>
     </header>
   );
