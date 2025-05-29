@@ -28,10 +28,10 @@ const Login = () => {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col items-center gap-5 mt-52">
+      <div className="h-[90vh] flex flex-col items-center gap-5 ">
         {alert.show && <AlertPopup message={alert.message} type={alert.type} />}
         <form
-          className="bg-white bg-opacity-65 p-8 rounded-3xl shadow-md w-full max-w-md h-fit"
+          className="bg-white bg-opacity-65 p-8 rounded-3xl shadow-md w-full max-w-md h-fit mt-20"
           onSubmit={handleSubmit}
         >
           <div className="text-center">

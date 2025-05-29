@@ -12,6 +12,7 @@ import buenoAiresImage from './public/buenosaires.png'
 import Image from 'next/image'
 // import { FaStar } from 'react-icons/fa'; 
 import {FaChevronDown, FaChevronUp } from 'react-icons/fa'
+import { CardProperty } from '@/components/CardProperty'
 
 
 const TOP_SEARCH = [
@@ -131,18 +132,34 @@ const Page = () => {
         <Banner />
       </section>
 
-      <section className='px-8 max-w-[1400px] m-auto'>
-       
-        <div className='px-2 max-w-[1400px] m-auto'>
-          <h2 className="font-roboto text-3xl text-slate-700 font-bold py-4">Destinos populares</h2>
-          {(properties.length > 0 && !isLoading) && <GridProperties properties={properties} />}
-          {isLoading && <Spinner />}
-        </div>
-      </section>
+     <section className='px-4 sm:px-8 max-w-[1400px] mx-auto'>
+  <div className='px-2'>
+    <h2 className="font-roboto text-3xl md:text-4xl text-slate-700 font-bold py-4 mb-6 border-b border-gray-100 pb-2">
+      Destinos populares
+    </h2>
+    <p className="text-gray-600 mb-8 max-w-2xl">
+      Descubre los alojamientos mejor valorados por nuestros huéspedes
+    </p>
+    
+    {isLoading ? (
+      <div className="flex justify-center py-12">
+        <Spinner />
+      </div>
+    ) : (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {properties.slice(0, 4).map(property => (
+          <CardProperty key={property.id} property={property} />
+        ))}
+      </div>
+    )}
+  </div>
+</section>
 
        <section className='px-4 sm:px-8 max-w-[1400px] mx-auto'>
         <div className="text-center mb-12">
-          <h2 className="font-bold text-3xl md:text-4xl text-gray-800 mb-4">Preguntas Frecuentes</h2>
+          <h2 className="font-bold text-3xl md:text-4xl text-gray-800 mb-4 relative inline-block after:content-[''] after:absolute after:-bottom-2 after:left-0 after:w-1/3 after:h-1 after:bg-[#5FA777]">
+  Preguntas Frecuentes
+</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
             Encuentra respuestas a las dudas más comunes sobre nuestros servicios
           </p>
@@ -161,13 +178,37 @@ const Page = () => {
                 <h3 className="text-xl font-semibold text-gray-800 mb-2">¿Necesitas más ayuda?</h3>
                 <p className="text-gray-600">Estamos aquí para responder cualquier pregunta que tengas.</p>
               </div>
-              <button className="bg-[#5FA777] hover:bg-[#4a8a5f] text-white font-medium py-3 px-6 rounded-lg transition duration-200 whitespace-nowrap">
-                Contactar al soporte
-              </button>
+             <button className="bg-[#5FA777] hover:bg-[#4a8a5f] text-white font-medium py-3 px-6 rounded-lg transition-all duration-300 transform hover:-translate-y-0.5 shadow-md hover:shadow-lg">
+  Contactar al soporte
+</button>
             </div>
           </div>
         </div>
       </section>
+
+      <section className="px-4 sm:px-8 max-w-[1400px] mx-auto py-12 bg-[#5FA777] rounded-xl text-white">
+  <div className="max-w-3xl mx-auto text-center">
+    <h2 className="font-bold text-3xl md:text-4xl mb-4">Recibe ofertas exclusivas</h2>
+    <p className="text-lg mb-6">Suscríbete a nuestro newsletter y sé el primero en conocer promociones especiales.</p>
+    
+    <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+      <input 
+        type="email" 
+        placeholder="Tu email" 
+        className="flex-grow px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-white"
+        required
+      />
+      <button 
+        type="submit" 
+        className="bg-white text-[#5FA777] font-medium py-3 px-6 rounded-lg hover:bg-gray-100 transition duration-200 shadow-md"
+      >
+        Suscribirse
+      </button>
+    </form>
+    
+    <p className="text-sm mt-4 opacity-80">Puedes cancelar tu suscripción en cualquier momento.</p>
+  </div>
+</section>
     </div>
   )
 }

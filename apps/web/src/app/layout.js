@@ -20,7 +20,7 @@ export default function RootLayout({ children }) {
       <body className={`${roboto.className} antialiased bg-slate-50`}>
         <Header />
 
-        <main className="min-h-screen mb-20">
+        <main className="min-h-screen mb-10">
           {children}
            <FloatingBackButton />
         </main>

@@ -3,7 +3,7 @@ export const App = () => {
     <>
       <Header />
 
-      <main className="min-h-screen mb-20">
+      <main className="min-h-screen mb-10">
         {children}
       </main>
 
