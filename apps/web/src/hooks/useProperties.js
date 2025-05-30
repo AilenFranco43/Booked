@@ -39,7 +39,6 @@ export const useProperties = () => {
 
     const data = await response.json();
     
-    // Asegúrate que cada propiedad tenga los campos de rating
     const propertiesWithRatings = data.map(property => ({
       ...property,
       averageRating: property.averageRating || 0,

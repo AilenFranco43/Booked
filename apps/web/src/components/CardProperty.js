@@ -5,17 +5,27 @@ import { useState } from 'react';
 
 export const CardProperty = ({ property }) => {
   const [isFavorite, setIsFavorite] = useState(false);
+  
+  if (!property || (!property._id && !property.id)) {
+    console.error('Propiedad inválida:', property);
+    return null;
+  }
+
+  // Usar id o _id según lo que venga
+  // const propertyId = property._id || property.id;
+  
   const {
     title,
     description,
     price,
     photos,
     tags,
-    _id,
+    propertyId = property._id || property.id,
     max_people,
     averageRating,
     reviewCount,
-    location
+    location,
+    address
   } = property;
 
   const truncateText = (text, maxLength = 100) => {
@@ -30,7 +40,7 @@ export const CardProperty = ({ property }) => {
 
   return (
     <div className="relative bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-200">
-      <Link href={`/property/detail/${_id}`} className="block" onClick={console.log(property)}>
+      <Link href={`/property/detail/${propertyId}`} className="block">
         {/* Imagen con overlay */}
         <div className="relative h-52 w-full">
           <Image
@@ -87,12 +97,10 @@ export const CardProperty = ({ property }) => {
           <h3 className="font-bold text-lg mb-1 line-clamp-1 text-gray-800">
             {capitalizeFirstLetter(title)}
           </h3>
-          {location && (
-            <div className="flex items-center text-gray-600 text-sm mb-3">
-              <FaMapMarkerAlt className="mr-1.5 text-[#5FA777]" />
-              <span className="truncate">{capitalizeFirstLetter(location)}</span>
-            </div>
-          )}
+          <div className="flex items-center text-gray-600 text-sm mb-3">
+            <FaMapMarkerAlt className="mr-1.5 text-[#5FA777]" />
+            <span className="truncate">{capitalizeFirstLetter(location || address || 'Ubicación no disponible')}</span>
+          </div>
 
           {/* Rating */}
           <div className="flex items-center mb-4">
@@ -109,7 +117,7 @@ export const CardProperty = ({ property }) => {
 
           {/* Descripción */}
           <p className="text-gray-600 text-sm mb-5 line-clamp-2">
-            {capitalizeFirstLetter(description)}
+            {truncateText(capitalizeFirstLetter(description), 100)}
           </p>
 
           {/* Capacidad y precio */}
@@ -119,7 +127,7 @@ export const CardProperty = ({ property }) => {
               <span>{max_people} personas</span>
             </div>
             <div className="text-right">
-              <p className="text-lg font-bold text-[#5FA777]">${price.toLocaleString()}</p>
+              <p className="text-lg font-bold text-[#5FA777]">${price?.toLocaleString() || '0'}</p>
               <p className="text-xs text-gray-500 mt-0.5">por noche</p>
             </div>
           </div>

@@ -1,13 +1,13 @@
-'use client';
+'use client'
 
-import { useEffect, useState, useMemo } from "react";
-import { GridProperties } from "../../components/GridProperties";
-import { useProperties } from "../../hooks/useProperties";
-import { InputSearch } from "../../ui/InputSearch";
-import { Spinner } from "../../ui/Spinner";
-import { useSearchParams, useRouter } from 'next/navigation';
-import { FaUsers, FaDollarSign, FaHome, FaTrash, FaFilter, FaSortAmountDown } from "react-icons/fa";
-import { Tags } from "lucide-react";
+import { useEffect, useState } from "react"
+import { CardProperty } from "@/components/CardProperty"
+import { useProperties } from "../../hooks/useProperties"
+import { InputSearch } from "../../ui/InputSearch"
+import { Spinner } from "../../ui/Spinner"
+import { useSearchParams, useRouter } from 'next/navigation'
+import { FaUsers, FaDollarSign, FaHome, FaTrash, FaFilter, FaSortAmountDown } from "react-icons/fa"
+import { Tags } from "lucide-react"
 
 const INITIAL_FILTERS_VALUES = {
   maxPrice: 0,
@@ -22,52 +22,58 @@ const Page = () => {
   const searchParams = useSearchParams();
   const { properties, getProperties, isLoading } = useProperties();
 
-  // Convertir searchParams a objeto y sincronizar con estado local
-  const params = useMemo(() => {
-    const paramsObj = Object.fromEntries(searchParams.entries());
-    return {
-      ...paramsObj,
-      maxPrice: Number(paramsObj.maxPrice) || INITIAL_FILTERS_VALUES.maxPrice,
-      min_people: Number(paramsObj.min_people) || INITIAL_FILTERS_VALUES.min_people,
-      title: paramsObj.title || INITIAL_FILTERS_VALUES.title,
-      tags: paramsObj.tags ? paramsObj.tags.split(',') : INITIAL_FILTERS_VALUES.tags,
-      sort: paramsObj.sort || INITIAL_FILTERS_VALUES.sort,
-      address: paramsObj.address || '',
-      startDate: paramsObj.startDate || '',
-      endDate: paramsObj.endDate || ''
-    };
-  }, [searchParams]);
+  // Estado local para los filtros
+  const [filters, setFilters] = useState(INITIAL_FILTERS_VALUES);
 
-  // Estado local sincronizado con los parámetros de la URL
-  const [filters, setFilters] = useState(params);
-
-  // Actualizar propiedades cuando cambien los parámetros
+  // Obtener propiedades cuando cambien los parámetros de búsqueda
   useEffect(() => {
     const fetchProperties = async () => {
-      const apiParams = {
-        ...params,
-        orderBy: params.sort === 'price_asc' ? 'ASC' : 
-                params.sort === 'price_desc' ? 'DES' : undefined
+      const queryParams = {
+        address: searchParams.get('address') || '',
+        startDate: searchParams.get('startDate') || '',
+        endDate: searchParams.get('endDate') || '',
+        maxPrice: Number(searchParams.get('maxPrice')) || 0,
+        min_people: Number(searchParams.get('min_people')) || 1,
+        title: searchParams.get('title') || '',
+        tags: searchParams.get('tags') ? searchParams.get('tags').split(',') : [],
+        sort: searchParams.get('sort') || ''
       };
-      
-      // Eliminar campos vacíos o con valores por defecto
-      Object.keys(apiParams).forEach(key => {
-        if (apiParams[key] === '' || 
-            apiParams[key] === 0 || 
-            (Array.isArray(apiParams[key]) && apiParams[key].length === 0)) {
-          delete apiParams[key];
+
+      // Actualizar filtros locales
+      setFilters({
+        maxPrice: queryParams.maxPrice,
+        min_people: queryParams.min_people,
+        title: queryParams.title,
+        tags: queryParams.tags,
+        sort: queryParams.sort
+      });
+
+      // Limpiar parámetros vacíos
+      const cleanParams = {};
+      Object.keys(queryParams).forEach(key => {
+        if (queryParams[key] !== '' && 
+            queryParams[key] !== 0 && 
+            !(Array.isArray(queryParams[key]) && queryParams[key].length === 0)) {
+          cleanParams[key] = queryParams[key];
         }
       });
 
-      await getProperties(apiParams);
+      // Convertir sort a orderBy si es necesario
+      if (cleanParams.sort) {
+        cleanParams.orderBy = cleanParams.sort === 'price_asc' ? 'ASC' : 
+                           cleanParams.sort === 'price_desc' ? 'DES' : undefined;
+        delete cleanParams.sort;
+      }
+
+      console.log("Fetching properties with params:", cleanParams); // Debug
+      await getProperties(cleanParams);
     };
 
     fetchProperties();
-  }, [params]); // Depende solo de params
+  }, [searchParams]); // Solo se ejecuta cuando cambian los searchParams
 
   const handleFilterChange = (name, value) => {
-    const newFilters = { ...filters, [name]: value };
-    setFilters(newFilters);
+    setFilters(prev => ({ ...prev, [name]: value }));
   };
 
   const handleClickFilter = () => {
@@ -75,17 +81,16 @@ const Page = () => {
 
     // Agregar filtros activos
     Object.entries(filters).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        if (value.length > 0) queryParams.set(key, value.join(','));
-      } else if (value && value.toString().trim() !== '' && 
-                value !== INITIAL_FILTERS_VALUES[key]) {
+      if (Array.isArray(value) && value.length > 0) {
+        queryParams.set(key, value.join(','));
+      } else if (value && value.toString().trim() !== '' && value !== INITIAL_FILTERS_VALUES[key]) {
         queryParams.set(key, value.toString());
       }
     });
 
     // Mantener parámetros de búsqueda básicos
     ['address', 'startDate', 'endDate'].forEach(param => {
-      if (params[param]) queryParams.set(param, params[param]);
+      if (searchParams.get(param)) queryParams.set(param, searchParams.get(param));
     });
 
     router.push(`/property?${queryParams.toString()}`);
@@ -95,11 +100,13 @@ const Page = () => {
     // Mantener solo los parámetros básicos de búsqueda
     const queryParams = new URLSearchParams();
     ['address', 'startDate', 'endDate'].forEach(param => {
-      if (params[param]) queryParams.set(param, params[param]);
+      if (searchParams.get(param)) queryParams.set(param, searchParams.get(param));
     });
 
     router.push(queryParams.toString() ? `/property?${queryParams.toString()}` : '/property');
   };
+
+  console.log("Current properties:", properties); // Debug
 
   return (
     <section className="flex gap-20 p-8">
@@ -221,13 +228,22 @@ const Page = () => {
         <InputSearch />
 
         {isLoading ? (
-          <Spinner />
+          <div className="flex justify-center items-center h-64">
+            <Spinner />
+          </div>
         ) : properties.length > 0 ? (
-          <GridProperties properties={properties} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-2 sm:px-2 py-6 w-full">
+            {properties.map((property) => (
+              <CardProperty 
+                key={property._id} 
+                property={property} 
+              />
+            ))}
+          </div>
         ) : (
           <div className="text-center py-10 w-full">
             <h3 className="text-xl font-semibold text-gray-700 mb-2">
-              {params.address ? `No se encontraron propiedades en ${params.address}` : "No hay propiedades disponibles"}
+              {searchParams.get('address') ? `No se encontraron propiedades en ${searchParams.get('address')}` : "No hay propiedades disponibles"}
             </h3>
             <p className="text-gray-500 mb-4">
               Prueba ajustando tus filtros de búsqueda
