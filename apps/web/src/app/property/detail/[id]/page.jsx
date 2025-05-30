@@ -193,6 +193,23 @@ const PropertyDetail = () => {
     }
   };
 
+  // Traducir tags
+  const TAGS_TRANSLATION = {
+    beachfront: "Playa en frente",
+    wifi: "Wifi",
+    "pets allowed": "Se permiten mascotas",
+    pool: "Piscina",
+    "with furniture": "Amueblada",
+    "Smoking is allowed": "Se permite fumar",
+    "private parking": "Estacionamiento Privado",
+    workspace: "Espacio de trabajo",
+  };
+
+  // Función para traducir tags
+  const translateTag = (tag) => {
+    return TAGS_TRANSLATION[tag.toLowerCase()] || tag;
+  };
+
   return (
     <section className="p-8 space-y-8">
       <div className="flex justify-center items-center">
@@ -205,7 +222,7 @@ const PropertyDetail = () => {
         <div className="flex gap-20">
           {/* Panel de reserva */}
           <div className="space-y-4 h-fit w-80 bg-slate-50 rounded p-6 border border-slate-200 shadow-md sticky top-4">
-            <header className="space-y-2">
+            <div className="space-y-2">
               <h2 className="font-semibold">
                 {currentProperty?.title
                   ? currentProperty.title.charAt(0).toUpperCase() +
@@ -218,7 +235,7 @@ const PropertyDetail = () => {
                 </span>
                 /la noche
               </p>
-            </header>
+            </div>
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -264,7 +281,7 @@ const PropertyDetail = () => {
               <label htmlFor="">Huéspedes: {selectedPeopleQuantity}</label>
               <p className="text-sm text-gray-600">
                 Máximo: {currentProperty.max_people} personas
-                </p>
+              </p>
               <input
                 type="range"
                 name="peopleQuantity"
@@ -340,6 +357,22 @@ const PropertyDetail = () => {
                   No hay imágenes disponibles
                 </p>
               )}
+
+              <div className="col-span-8 pt-4">
+                {/* Añade esta sección para mostrar los tags */}
+                {currentProperty.tags?.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {currentProperty.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="bg-[#5FA777] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm"
+                      >
+                        {translateTag(tag)}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <div className="col-span-8 pt-4">
                 <h2>{currentProperty.description}</h2>

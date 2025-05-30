@@ -3,59 +3,80 @@
 import { useState } from "react"
 const API = process.env.NEXT_PUBLIC_API_URL;
 
+
+// Función para normalizar propiedades
+const normalizeProperty = (property) => ({
+  _id: property._id || property.id,
+  id: property.id || property._id,
+  title: property.title || 'Sin título',
+  description: property.description || '',
+  price: Number(property.price) || 0,
+  photos: Array.isArray(property.photos) ? property.photos : [],
+  tags: Array.isArray(property.tags) ? property.tags : [],
+  max_people: Number(property.max_people) || 1,
+  averageRating: property.averageRating !== undefined ? Number(property.averageRating) : 0,
+  reviewCount: property.reviewCount !== undefined ? Number(property.reviewCount) : 0,
+  location: property.location || '',
+  address: property.address || '',
+  
+});
+
 export const useProperties = () => {
   const [properties, setProperties] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
- const getProperties = async (inputQueryParams = {}) => {
-  setIsLoading(true);
-  setError(null);
-  
-  try {
-    const queryParams = new URLSearchParams();
+const getProperties = async (inputQueryParams = {}) => {
+    setIsLoading(true);
+    setError(null);
     
-    // Añade sortByRating si no está presente
-    if (!inputQueryParams.sortByRating && inputQueryParams.orderBy) {
-      inputQueryParams.sortByRating = inputQueryParams.orderBy === 'ASC' ? 'asc' : 'desc';
-    }
-
-    Object.entries(inputQueryParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        queryParams.append(key, value.toString());
+    try {
+      const queryParams = new URLSearchParams();
+      
+      // Clonar parámetros para no modificar el original
+      const params = { ...inputQueryParams };
+      
+      // Convertir orderBy a sortByRating si es necesario
+      if (params.orderBy && !params.sortByRating) {
+        params.sortByRating = params.orderBy === 'ASC' ? 'asc' : 'desc';
+        delete params.orderBy;
       }
-    });
 
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API}/property?${queryParams.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+      // Agregar parámetros válidos
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          queryParams.append(key, value.toString());
+        }
+      });
+
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API}/property?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
-    });
 
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      const data = await response.json();
+      
+      // Normalizar todas las propiedades
+      const normalizedProperties = Array.isArray(data) 
+        ? data.map(normalizeProperty)
+        : [normalizeProperty(data)];
+
+      setProperties(normalizedProperties);
+      return normalizedProperties;
+    } catch (err) {
+      setError(err.message);
+      setProperties([]);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-
-    const data = await response.json();
-    
-    const propertiesWithRatings = data.map(property => ({
-      ...property,
-      averageRating: property.averageRating || 0,
-      reviewCount: property.reviewCount || 0
-    }));
-
-    setProperties(propertiesWithRatings);
-    return propertiesWithRatings;
-  } catch (err) {
-    setError(err.message);
-    setProperties([]);
-    throw err;
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
   const getUserProperties = async () => {
     setIsLoading(true)
     setError(null)

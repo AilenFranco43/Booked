@@ -65,12 +65,11 @@ const Page = () => {
         delete cleanParams.sort;
       }
 
-      console.log("Fetching properties with params:", cleanParams); // Debug
       await getProperties(cleanParams);
     };
 
     fetchProperties();
-  }, [searchParams]); // Solo se ejecuta cuando cambian los searchParams
+  }, [searchParams]);
 
   const handleFilterChange = (name, value) => {
     setFilters(prev => ({ ...prev, [name]: value }));
@@ -97,7 +96,6 @@ const Page = () => {
   };
 
   const handleClickRemoveFilters = () => {
-    // Mantener solo los parámetros básicos de búsqueda
     const queryParams = new URLSearchParams();
     ['address', 'startDate', 'endDate'].forEach(param => {
       if (searchParams.get(param)) queryParams.set(param, searchParams.get(param));
@@ -106,11 +104,10 @@ const Page = () => {
     router.push(queryParams.toString() ? `/property?${queryParams.toString()}` : '/property');
   };
 
-  console.log("Current properties:", properties); // Debug
-
   return (
-    <section className="flex gap-20 p-8">
-      <div className="flex flex-col gap-6 bg-[#f1f5f9] px-6 py-5 w-[340px] rounded-2xl shadow-md">
+    <section className="flex flex-col md:flex-row gap-8 p-4 md:p-8">
+      {/* Panel de filtros */}
+      <div className="flex flex-col gap-6 bg-[#f1f5f9] px-6 py-5 w-full md:w-[340px] rounded-2xl shadow-md h-fit">
         <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <FaFilter /> Filtros
         </h2>
@@ -224,7 +221,8 @@ const Page = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-10 justify-center items-center w-full h-full">
+      {/* Listado de propiedades */}
+      <div className="flex flex-col gap-6 w-full">
         <InputSearch />
 
         {isLoading ? (
@@ -232,10 +230,10 @@ const Page = () => {
             <Spinner />
           </div>
         ) : properties.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 px-2 sm:px-2 py-6 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
             {properties.map((property) => (
               <CardProperty 
-                key={property._id} 
+                key={property._id || property.id} 
                 property={property} 
               />
             ))}
