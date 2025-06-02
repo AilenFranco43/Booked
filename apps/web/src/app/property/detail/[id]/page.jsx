@@ -1,31 +1,29 @@
 "use client";
 
-// Importaciones de librerías externas
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-// Importaciones de componentes locales
+// Components
 import { Avatar } from "@/components/ui/avatar";
 import { InputSearch } from "../../../../ui/InputSearch";
 import { Spinner } from "../../../../ui/Spinner";
 import Map from "@/components/ui/Map";
 import RatingForm from "@/components/ui/RatingForm";
 import RatingSummary from "@/components/ui/RatingSumary";
-
 import { ReviewCard } from "@/components/ui/ReviewCard";
 
-// Importaciones de hooks personalizados
+// Hooks
 import { useProperties } from "../../../../hooks/useProperties";
 import { useInputSearch } from "../../../../hooks/useInputSearch";
 import { useAuth } from "@/hooks/useAuth";
-// Importaciones de utils
 
+// Utils
 import { countDaysBetweenDates } from "@/utils/dateHelpers";
 
-// Importaciones de API
+// API
 import {
   paymentStripe,
   getUserById,
@@ -34,21 +32,17 @@ import {
 } from "@/app/api/callApi";
 
 const PropertyDetail = () => {
-  // Hooks de routing y autenticación
   const params = useParams();
   const router = useRouter();
   const { user: currentUser } = useAuth();
 
-  // Hooks personalizados
   const { searchValues } = useInputSearch();
   const { getPropertyById } = useProperties();
 
-  // Estados principales
+  // States
   const [currentProperty, setCurrentProperty] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [hostData, setHostData] = useState(null);
-
-  // Estados para reserva
   const [selectedPeopleQuantity, setSelectedPeopleQuantity] = useState(1);
   const [totalPrice, setTotalPrice] = useState(0);
   const [dateRange, setDateRange] = useState({
@@ -56,19 +50,14 @@ const PropertyDetail = () => {
     endDate: null,
   });
   const { startDate, endDate } = dateRange;
-
-  // Estados para reseñas
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [isLoadingReviews, setIsLoadingReviews] = useState(true);
-
-  // Estados para galería de imágenes
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState("");
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Efectos
   useEffect(() => {
     setIsLoading(true);
     getPropertyById(params?.id)
@@ -80,12 +69,8 @@ const PropertyDetail = () => {
   useEffect(() => {
     if (currentProperty.userId) {
       getUserById(currentProperty.userId)
-        .then((userData) => {
-          setHostData(userData);
-        })
-        .catch((error) => {
-          console.error("Error al obtener datos del propietario:", error);
-        });
+        .then((userData) => setHostData(userData))
+        .catch((error) => console.error("Error fetching host data:", error));
     }
   }, [currentProperty.userId]);
 
@@ -107,8 +92,7 @@ const PropertyDetail = () => {
           const data = await getReviewsByProperty(currentProperty.id);
           setReviews(data.reviews || []);
 
-          // Calcular el promedio si no viene del backend
-          if (data.reviews && data.reviews.length > 0) {
+          if (data.reviews?.length > 0) {
             const avg =
               data.reviews.reduce((sum, review) => sum + review.rating, 0) /
               data.reviews.length;
@@ -134,7 +118,7 @@ const PropertyDetail = () => {
 
   const handleClickReserve = async () => {
     if (!startDate || !endDate) {
-      alert("Por favor selecciona fechas de check-in y check-out");
+      alert("Please select check-in and check-out dates");
       return;
     }
 
@@ -152,22 +136,19 @@ const PropertyDetail = () => {
       const responseUrl = await paymentStripe(payment);
       if (responseUrl) window.location.href = responseUrl;
     } catch (error) {
-      alert("Error al procesar el pago");
+      alert("Error processing payment");
     }
   };
-  // Función para manejar la eliminación de reseñas
+
   const handleDeleteReview = async (reviewId) => {
     try {
-      // Optimistic update (actualización inmediata antes de la respuesta del servidor)
       const previousReviews = [...reviews];
       setReviews((prev) =>
         prev.filter((r) => r.id !== reviewId && r._id !== reviewId)
       );
 
-      // Intenta eliminar en el servidor
       await deleteReview(reviewId);
 
-      // Recalcular promedio
       const updatedReviews = previousReviews.filter(
         (r) => r.id !== reviewId && r._id !== reviewId
       );
@@ -182,306 +163,208 @@ const PropertyDetail = () => {
       }
       setReviewCount(updatedReviews.length);
     } catch (error) {
-      // Si falla, revertir los cambios
       setReviews(previousReviews);
-      console.error("Error completo al eliminar:", {
-        message: error.message,
-        reviewId,
-        currentUser: currentUser?.id,
-      });
-      alert(`Error al eliminar: ${error.message}`);
+      console.error("Error deleting review:", error);
+      alert(`Error: ${error.message}`);
     }
   };
 
-  // Traducir tags
   const TAGS_TRANSLATION = {
-    beachfront: "Playa en frente",
-    wifi: "Wifi",
+    beachfront: "Frente a la playa",
+    wifi: "WiFi",
     "pets allowed": "Se permiten mascotas",
-    pool: "Piscina",
-    "with furniture": "Amueblada",
-    "Smoking is allowed": "Se permite fumar",
-    "private parking": "Estacionamiento Privado",
+    pool: "Con piscina",
+    "with furniture": "Amueblado",
+    "Smoking is allowed": "Permitido fumar",
+    "private parking": "Estacionamiento privado",
     workspace: "Espacio de trabajo",
   };
 
-  // Función para traducir tags
   const translateTag = (tag) => {
     return TAGS_TRANSLATION[tag.toLowerCase()] || tag;
   };
 
   return (
-    <section className="p-8 space-y-8">
-      <div className="flex justify-center items-center">
-        <InputSearch />
+    <div className="min-h-screen bg-gray-50">
+      {/* Search Bar */}
+      <div className="bg-white shadow-sm py-4 px-6  top-0 z-10 flex ">
+        <div className="max-w-7xl mx-auto">
+          <InputSearch />
+        </div>
       </div>
 
-      {isLoading && <Spinner />}
-
-      {!isLoading && Object.keys(currentProperty).length > 1 && (
-        <div className="flex gap-20">
-          {/* Panel de reserva */}
-          <div className="space-y-4 h-fit w-80 bg-slate-50 rounded p-6 border border-slate-200 shadow-md sticky top-4">
-            <div className="space-y-2">
-              <h2 className="font-semibold">
-                {currentProperty?.title
-                  ? currentProperty.title.charAt(0).toUpperCase() +
-                    currentProperty.title.slice(1).toLowerCase()
-                  : ""}
-              </h2>
-              <p className="font-medium">
-                <span className="text-green-600">
-                  ${currentProperty?.price}
-                </span>
-                /la noche
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Fechas de estadía
-              </label>
-              <DatePicker
-                selectsRange
-                startDate={startDate}
-                endDate={endDate}
-                onChange={(update) => {
-                  if (currentUser) {
-                    const [start, end] = update;
-                    setDateRange({
-                      startDate: start,
-                      endDate: end,
-                    });
-                  } else {
-                    router.push("/register");
-                  }
-                }}
-                minDate={new Date()}
-                placeholderText={
-                  currentUser
-                    ? "Check-in → Check-out"
-                    : "Regístrate para seleccionar fechas"
-                }
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500"
-                dateFormat="dd/MM/yyyy"
-                isClearable
-                monthsShown={2}
-                shouldCloseOnSelect={false}
-                disabled={!currentUser}
-              />
-              {startDate && endDate && (
-                <p className="text-sm text-gray-600">
-                  {countDaysBetweenDates(startDate, endDate)} noches
-                  seleccionadas
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="">Huéspedes: {selectedPeopleQuantity}</label>
-              <p className="text-sm text-gray-600">
-                Máximo: {currentProperty.max_people} personas
-              </p>
-              <input
-                type="range"
-                name="peopleQuantity"
-                min={1}
-                max={currentProperty.max_people}
-                className="w-full accent-[#318F51]"
-                onChange={(data) =>
-                  setSelectedPeopleQuantity(data.target.value)
-                }
-                value={selectedPeopleQuantity}
-              />
-            </div>
-
-            <button
-              onClick={
-                currentUser
-                  ? handleClickReserve
-                  : () => router.push("/register")
-              }
-              className="bg-[#318F51] py-2 rounded-lg w-full font-semibold text-slate-100 hover:bg-[#5FA77C82]/70 transition-colors"
-              disabled={!startDate || !endDate}
-            >
-              {currentUser ? "Reservar" : "Regístrate para reservar"}
-            </button>
-
-            <div className="text-center">
-              <strong>Total: ${totalPrice.toFixed(2)}</strong>
-              {startDate && endDate && (
-                <p className="text-sm text-gray-600">
-                  {countDaysBetweenDates(startDate, endDate)} noches × $
-                  {currentProperty?.price}
-                </p>
-              )}
-            </div>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-96">
+            <Spinner size="lg" />
           </div>
+        ) : Object.keys(currentProperty).length > 1 ? (
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Property Details */}
+            <div className="flex-1">
+              {/* Property Header */}
+              <div className="mb-6">
+                <h1 className="text-3xl font-bold text-gray-900">
+                  {currentProperty.title.charAt(0).toUpperCase() + currentProperty.title.slice(1).toLowerCase()}
+                </h1>
+                <div className="flex items-center mt-2">
+                 
+                  <span className="text-gray-600">
+                    {currentProperty.location}
+                  </span>
+                </div>
+              </div>
 
-          {/* Contenido principal */}
-          <div className="space-y-8 size-[1200px] h-full">
-            {/* Galería de imágenes */}
-            <div className="p-4 grid grid-cols-8 gap-2 bg-[#5FA77738] rounded-xl max-w-4xl mx-auto">
-              {currentProperty.photos?.length > 0 ? (
-                <>
-                  <img
-                    className="col-span-5 row-span-2 w-full h-full object-cover cursor-pointer"
-                    src={currentProperty.photos[0]}
-                    alt={`Portada de ${currentProperty.title}`}
-                    onClick={() => {
-                      setCurrentImageIndex(0);
-                      setSelectedImage(currentProperty.photos[0]);
-                      setIsModalOpen(true);
-                    }}
-                  />
-                  {currentProperty.photos.slice(1, 4).map((photo, index) => (
-                    <img
-                      key={index}
-                      className={`${index === 0 ? "col-start-6 col-span-3 w-full" : ""} 
-                                  ${index === 1 ? "col-start-6 col-span-3" : ""} 
-                                  ${index === 2 ? "col-start-4 col-span-3" : ""}`}
-                      src={photo}
-                      alt={`Imagen ${index + 1} de ${currentProperty.title}`}
-                      onClick={() => {
-                        const clickedIndex =
-                          currentProperty.photos.indexOf(photo);
-                        setCurrentImageIndex(clickedIndex);
-                        setSelectedImage(photo);
-                        setIsModalOpen(true);
-                      }}
-                    />
-                  ))}
-                </>
-              ) : (
-                <p className="col-span-8 text-center py-10">
-                  No hay imágenes disponibles
-                </p>
-              )}
-
-              <div className="col-span-8 pt-4">
-                {/* Añade esta sección para mostrar los tags */}
-                {currentProperty.tags?.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {currentProperty.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-[#5FA777] text-white text-xs font-medium px-3 py-1 rounded-full shadow-sm"
+              {/* Image Gallery */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-8">
+                {currentProperty.photos?.length > 0 ? (
+                  <>
+                    <div className="md:col-span-2 md:row-span-2">
+                      <div
+                        className="relative h-80 w-full rounded-xl overflow-hidden cursor-pointer bg-gray-200"
+                        onClick={() => {
+                          setCurrentImageIndex(0);
+                          setSelectedImage(currentProperty.photos[0]);
+                          setIsModalOpen(true);
+                        }}
                       >
-                        {translateTag(tag)}
-                      </span>
+                        <Image
+                          src={currentProperty.photos[0]}
+                          alt={`Main photo of ${currentProperty.title}`}
+                          fill
+                          className="object-cover hover:opacity-90 transition-opacity"
+                          priority
+                        />
+                      </div>
+                    </div>
+                    {currentProperty.photos.slice(1, 5).map((photo, index) => (
+                      <div
+                        key={index}
+                        className={`relative h-40 rounded-xl overflow-hidden cursor-pointer bg-gray-200 ${
+                          index === 3 ? "hidden md:block" : ""
+                        }`}
+                        onClick={() => {
+                          const clickedIndex =
+                            currentProperty.photos.indexOf(photo);
+                          setCurrentImageIndex(clickedIndex);
+                          setSelectedImage(photo);
+                          setIsModalOpen(true);
+                        }}
+                      >
+                        <Image
+                          src={photo}
+                          alt={`Photo ${index + 1} of ${currentProperty.title}`}
+                          fill
+                          className="object-cover hover:opacity-90 transition-opacity"
+                        />
+                        {index === 2 && currentProperty.photos.length > 4 && (
+                          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                            <span className="text-white font-bold text-xl">
+                              +{currentProperty.photos.length - 4} más
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     ))}
+                  </>
+                ) : (
+                  <div className="col-span-4 h-80 bg-gray-200 rounded-xl flex items-center justify-center">
+                    <p className="text-gray-500">No hay imágenes disponibles</p>
                   </div>
                 )}
               </div>
 
-              <div className="col-span-8 pt-4">
-                <h2>{currentProperty.description}</h2>
-              </div>
-            </div>
-
-            {/* Modal de imagen */}
-            {isModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4 h-full top-[-30px]">
-                <button
-                  onClick={() => {
-                    setCurrentImageIndex(
-                      (prev) =>
-                        (prev - 1 + currentProperty.photos.length) %
-                        currentProperty.photos.length
-                    );
-                    setSelectedImage(currentProperty.photos[currentImageIndex]);
-                  }}
-                  className="text-white text-4xl p-4 hover:text-gray-300 absolute left-4"
-                  disabled={currentProperty.photos.length <= 1}
-                >
-                  ◀
-                </button>
-
-                <div className="relative max-w-4xl w-full max-h-[70vh]">
-                  <button
-                    onClick={() => setIsModalOpen(false)}
-                    className="absolute top-0 right-0 text-white text-2xl hover:text-gray-300"
-                  >
-                    ✕
-                  </button>
-                  <img
-                    src={selectedImage}
-                    alt="Imagen ampliada"
-                    className="w-full h-auto max-h-[70vh] object-contain"
-                  />
-                  <div className="absolute bottom-4 left-0 right-0 text-center text-white">
-                    {currentImageIndex + 1} / {currentProperty.photos.length}
+              {/* Property Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                {/* Left Column */}
+                <div className="md:col-span-2">
+                  {/* Host Info */}
+                  <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <div className="flex items-start gap-4">
+                      <Avatar
+                        src={hostData?.avatar}
+                        alt={hostData?.name}
+                        size="lg"
+                      />
+                      <div>
+                        <h3 className="text-xl font-semibold">
+                          Alojamiento ofrecido por {hostData?.name || "Unknown"}
+                        </h3>
+                        
+                        <div className="mt-4 flex items-center gap-2 text-sm">
+                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full flex items-center gap-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-4 w-4"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Anfitrión verificado
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-2">Sobre este alojamiento</h4>
+                      <p className="text-gray-700">
+                        {currentProperty.description ||
+                          "No description provided."}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <button
-                  onClick={() => {
-                    setCurrentImageIndex(
-                      (prev) => (prev + 1) % currentProperty.photos.length
-                    );
-                    setSelectedImage(currentProperty.photos[currentImageIndex]);
-                  }}
-                  className="text-white text-4xl p-4 hover:text-gray-300 absolute right-4"
-                  disabled={currentProperty.photos.length <= 1}
-                >
-                  ▶
-                </button>
-              </div>
-            )}
+                  {/* Amenities */}
+                  {currentProperty.tags?.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+                      <h3 className="text-xl font-semibold mb-4">Características</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {currentProperty.tags.map((tag, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center gap-3 text-gray-700"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="h-5 w-5 text-green-600"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            {translateTag(tag)}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
-            <hr className="h-[1px] bg-slate-400 mx-10" />
-
-            <hr className="h-[1px] bg-slate-400 mx-10" />
-
-            {/* Promedio de valoraciones */}
-            <div className="flex justify-between items-center px-10">
-              <h3 className="font-bold text-xl text-slate-700">
-                Valoración de los huéspedes
-              </h3>
-              <RatingSummary
-                averageRating={averageRating}
-                reviewCount={reviewCount}
-              />
-            </div>
-
-            <hr className="h-[1px] bg-slate-400 mx-10" />
-
-            <hr className="h-[1px] bg-slate-400 mx-10" />
-
-            {/* Mapa */}
-            <div className="space-y-20">
-              <h3 className="font-bold text-xl px-10 text-slate-700">
-                Acá es donde vas a estar
-              </h3>
-              <Map
-                latitude={currentProperty.coordinates?.latitude}
-                longitude={currentProperty.coordinates?.longitude}
-              />
-            </div>
-
-            {/* Información del anfitrión */}
-            <div className="flex justify-center items-center gap-10 text-slate-700">
-              <div className="flex flex-col justify-center items-center w-[400px]">
-                <h3 className="font-bold text-xl px-10 text-slate-700 pt-10">
-                  Conoce a tu anfitrión
-                </h3>
-                <Avatar src={hostData?.avatar} alt={hostData?.name} />
-                <strong>{hostData?.name}</strong>
-                <span className="py-2">Información confirmada</span>
-                <ul>
-                  <li>✔ Identidad</li>
-                  <li>✔ Correo electrónico</li>
-                  <li>✔ Número de teléfono</li>
-                </ul>
-              </div>
-
-              <div>
-                <div className="flex divide-x">
-                  {/* Sección de Reseñas */}
-                  <div className="mt-12 px-10">
-                    <h3 className="font-bold text-2xl text-slate-700 mb-6">
-                      Reseñas de los huéspedes
-                    </h3>
+                  {/* Reviews Section */}
+                  <div className="bg-white rounded-xl shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-xl font-semibold">
+                        <span className="text-gray-900">
+                          {averageRating.toFixed(1)}
+                        </span>{" "}
+                        <span className="text-gray-600">
+                          ({reviewCount} reseñas)
+                        </span>
+                      </h3>
+                      <RatingSummary
+                        averageRating={averageRating}
+                        reviewCount={reviewCount}
+                      />
+                    </div>
 
                     {isLoadingReviews ? (
                       <div className="flex justify-center py-8">
@@ -501,49 +384,321 @@ const PropertyDetail = () => {
                     ) : (
                       <div className="bg-gray-50 p-6 rounded-lg text-center">
                         <p className="text-gray-500">
-                          Esta propiedad aún no tiene reseñas. Sé el primero en
-                          opinar.
+                          Esta propiedad aún no tiene reseñas
                         </p>
+                      </div>
+                    )}
+
+                    {currentUser && (
+                      <div className="mt-8">
+                        <RatingForm
+                          propertyId={currentProperty.id}
+                          guestId={currentUser?.id}
+                          onSuccess={() => {
+                            // Recargar las reseñas después de enviar una nueva
+                            getReviewsByProperty(currentProperty.id)
+                              .then((data) => {
+                                setReviews(data.reviews || []);
+                                if (data.reviews?.length > 0) {
+                                  const avg =
+                                    data.reviews.reduce(
+                                      (sum, review) => sum + review.rating,
+                                      0
+                                    ) / data.reviews.length;
+                                  setAverageRating(avg);
+                                  setReviewCount(data.reviews.length);
+                                }
+                              })
+                              .catch(console.error);
+                          }}
+                        />
                       </div>
                     )}
                   </div>
                 </div>
-                <div>
-                  <RatingForm
-                    propertyId={currentProperty.id}
-                    guestId={currentUser?.id}
-                    onSuccess={() => {
-                      // Recargar las reseñas después de enviar una nueva
-                      fetchReviews();
-                    }}
-                  />
-                </div>
 
-                <hr className="bg-slate-400 my-4" />
+                {/* Right Column - Booking Widget */}
+                <div className="md:col-span-1">
+                  <div className="sticky top-6">
+                    <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                      {/* Price */}
+                      <div className="p-6 border-b border-gray-100">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-2xl font-bold text-gray-900">
+                              ${currentProperty.price}
+                            </span>
+                            <span className="text-gray-600"> / noche</span>
+                          </div>
+                          <div className="flex items-center">
+                            <RatingSummary
+                              averageRating={averageRating}
+                              reviewCount={reviewCount}
+                              compact={true}
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-                <div className="mx-2 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <p className="text-amber-500 font-semibold">
-                      Envíale un mensaje a tu anfitrión
-                    </p>
-                    {hostData?.email ? (
-                      <a
-                        href={`mailto:${hostData.email}?subject=Consulta sobre ${currentProperty.title}`}
-                        className="bg-[#318F51] py-1 px-2 rounded text-slate-50 font-semibold hover:bg-[#5FA77C] transition-colors"
-                      >
-                        Enviar correo
-                      </a>
-                    ) : (
-                      <p className="text-gray-500">Contacto no disponible</p>
-                    )}
+                      {/* Date Picker */}
+                      <div className="p-6 border-b border-gray-100">
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Seleccionar fechas
+                            </label>
+                            <DatePicker
+                              selectsRange
+                              startDate={startDate}
+                              endDate={endDate}
+                              onChange={(update) => {
+                                if (currentUser) {
+                                  const [start, end] = update;
+                                  setDateRange({
+                                    startDate: start,
+                                    endDate: end,
+                                  });
+                                } else {
+                                  router.push("/register");
+                                }
+                              }}
+                              minDate={new Date()}
+                              placeholderText={
+                                currentUser ? "Select dates" : "Sign up to book"
+                              }
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                              dateFormat="MMM d, yyyy"
+                              isClearable
+                              monthsShown={2}
+                              shouldCloseOnSelect={false}
+                              disabled={!currentUser}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Huéspedes
+                            </label>
+                            <div className="flex items-center justify-between">
+                              <span>{selectedPeopleQuantity} Huéspedes</span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() =>
+                                    setSelectedPeopleQuantity((prev) =>
+                                      Math.max(1, prev - 1)
+                                    )
+                                  }
+                                  disabled={selectedPeopleQuantity <= 1}
+                                  className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full disabled:opacity-50"
+                                >
+                                  -
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    setSelectedPeopleQuantity((prev) =>
+                                      Math.min(
+                                        currentProperty.max_people,
+                                        prev + 1
+                                      )
+                                    )
+                                  }
+                                  disabled={
+                                    selectedPeopleQuantity >=
+                                    currentProperty.max_people
+                                  }
+                                  className="w-8 h-8 flex items-center justify-center border border-gray-300 rounded-full disabled:opacity-50"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Price Breakdown */}
+                      <div className="p-6 border-b border-gray-100">
+                        <button
+                          onClick={
+                            currentUser
+                              ? handleClickReserve
+                              : () => router.push("/register")
+                          }
+                          disabled={!startDate || !endDate}
+                          className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-colors ${
+                            startDate && endDate
+                              ? "bg-green-600 hover:bg-green-700"
+                              : "bg-gray-400 cursor-not-allowed"
+                          }`}
+                        >
+                          {currentUser ? "Reservar" : "Regístrate para reservar"}
+                        </button>
+
+                        {startDate && endDate && (
+                          <div className="mt-4 space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600 underline">
+                                ${currentProperty.price} ×{" "}
+                                {countDaysBetweenDates(startDate, endDate)}{" "}
+                                noches
+                              </span>
+                              <span>${totalPrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between font-medium">
+                              <span>Total</span>
+                              <span>${totalPrice.toFixed(2)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Contact Host */}
+                      <div className="p-6">
+                        <button
+                          onClick={() => {
+                            if (hostData?.email) {
+                              window.location.href = `mailto:${hostData.email}?subject=Question about ${currentProperty.title}`;
+                            }
+                          }}
+                          className="w-full py-2 px-4 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                          disabled={!hostData?.email}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                          >
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                          </svg>
+                          Contactar anfitrión
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+
+              {/* Location Map */}
+              <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+                <h3 className="text-xl font-semibold mb-4">Ubicación</h3>
+                <div className="h-96 rounded-lg overflow-hidden">
+                  <Map
+                    latitude={currentProperty.coordinates?.latitude}
+                    longitude={currentProperty.coordinates?.longitude}
+                    interactive={true}
+                  />
+                </div>
+                
+              </div>
             </div>
           </div>
+        ) : (
+          <div className="text-center py-12">
+            <h2 className="text-xl font-medium text-gray-600">
+              Propiedad no encontrada
+            </h2>
+            <button
+              onClick={() => router.push("/")}
+              className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Buscar propiedades
+            </button>
+          </div>
+        )}
+      </main>
+
+      {/* Image Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4">
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="absolute top-6 right-6 text-white p-2 rounded-full hover:bg-gray-800 transition-colors"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          <button
+            onClick={() => {
+              setCurrentImageIndex(
+                (prev) =>
+                  (prev - 1 + currentProperty.photos.length) %
+                  currentProperty.photos.length
+              );
+              setSelectedImage(currentProperty.photos[currentImageIndex]);
+            }}
+            className="absolute left-6 text-white p-4 rounded-full hover:bg-gray-800 transition-colors"
+            disabled={currentProperty.photos.length <= 1}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          <div className="relative max-w-6xl w-full max-h-[90vh] flex items-center justify-center">
+            <img
+              src={selectedImage}
+              alt="Enlarged view"
+              className="max-w-full max-h-[90vh] object-contain"
+            />
+            <div className="absolute bottom-6 left-0 right-0 text-center text-white">
+              {currentImageIndex + 1} / {currentProperty.photos.length}
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setCurrentImageIndex(
+                (prev) => (prev + 1) % currentProperty.photos.length
+              );
+              setSelectedImage(currentProperty.photos[currentImageIndex]);
+            }}
+            className="absolute right-6 text-white p-4 rounded-full hover:bg-gray-800 transition-colors"
+            disabled={currentProperty.photos.length <= 1}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
         </div>
       )}
-    </section>
+    </div>
   );
 };
 

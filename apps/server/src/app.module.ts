@@ -8,9 +8,10 @@ import { PropertyModule } from './property/property.module';
 import { ReservationsModule } from './reservations/reservations.module';
 import { ReviewModule } from './review/review.module';
 import { AuthModule } from './auth/auth.module';
-import { PaymentsModule } from './payments/payments.module';
+
 
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+
 
 @Module({
   imports: [
@@ -21,7 +22,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     ReservationsModule,
     ReviewModule,
     AuthModule,
-    PaymentsModule,
+
     CloudinaryModule,
   ],
   controllers: [AppController],
