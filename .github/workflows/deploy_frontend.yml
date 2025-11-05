@@ -1,7 +1,6 @@
 name: Vercel Deploy FrontEnd
 
 env:
-  HUSKY: 'disable'
   BRANCH_NAME: ${{ github.ref_name }}
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID_FRONTEND }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FRONTEND }}
@@ -29,9 +28,7 @@ jobs:
         run: npm install --global vercel@latest
       
       - name: Install npm dependencies
-        run: |
-          cd apps/web
-          npm install
+        run: npm install
 
       - name: Build NextJS Project
         run: |

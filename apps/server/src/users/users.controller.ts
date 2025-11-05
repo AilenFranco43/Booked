@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -13,6 +14,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { LoginUserDto } from './dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { AuthGuard } from '@nestjs/passport';
 
 @ApiTags('users')
 @Controller('users')
@@ -55,7 +57,10 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'User updated successfully' })
   @ApiResponse({ status: 400, description: 'User not actualized' })
   @Patch('patch/:id')
+  @UseGuards(AuthGuard('jwt'))
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+
+    console.log('Body recibido:', updateUserDto); 
     if (updateUserDto.password) {
       updateUserDto.password = bcrypt.hashSync(updateUserDto.password, 10);
     }
@@ -64,10 +69,10 @@ export class UsersController {
 
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 200, description: 'Deleted user successfully' })
-  @ApiResponse({ status: 404, description: 'User not deleted'})
+  @ApiResponse({ status: 404, description: 'User not deleted' })
   @Delete('delete/:id')
+  @UseGuards(AuthGuard('jwt'))
   async remove(@Param('id') id: string) {
     return this.usersService.remove(id);
   }
 }
-

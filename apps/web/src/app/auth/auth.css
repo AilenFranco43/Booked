@@ -1,0 +1,13 @@
+#bodyLogin{
+    background-image: url("../public/fondo-booked.jfif");
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+
+    #formRegister{
+        background-color: #ffffffba;
+        color: #000;
+        
+    }
+}

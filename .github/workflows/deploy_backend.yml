@@ -1,7 +1,6 @@
 name: Vercel Deploy Backend
 
 env:
-  HUSKY: 'disable'
   VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
   VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -28,9 +27,7 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Install npm dependencies
-        run: |
-          cd apps/server
-          npm install
+        run: npm install
 
       - name: Build NestJS Project
         run: |

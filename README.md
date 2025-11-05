@@ -2,7 +2,7 @@
 
 ## Hospitalidad y Turismo / PropTech - Descripción
 
-Este proyecto es una plataforma de comercio electrónico que facilita la compra y venta de productos de manera eficiente. El propósito del proyecto es brindar una experiencia de compra fluida y fácil de usar, tanto para los clientes como para los administradores, con características como la gestión de usuarios, inventario y procesamiento de pagos.
+Booked, es una plataforma de reservas de inmuebles temporales diseñada para que el proceso de alquiler sea más rápido, seguro y confiable. Sabemos que los largos procesos y la falta de seguridad son grandes obstáculos al momento de reservar, así que Booked ofrece una experiencia optimizada para propietarios e inquilinos, donde pueden gestionar y reservar propiedades de manera inmediata y sin complicaciones. Además, al permitir valoraciones de usuarios, Booked fomenta la transparencia y la confianza, brindando la seguridad de que cada lugar es real. En resumen, una solución integral para alquileres seguros y eficientes.
 
 ## Colaboradores
 
@@ -13,8 +13,6 @@ Este proyecto es una plataforma de comercio electrónico que facilita la compra 
 <a href="https://www.linkedin.com/in/enlace3/" target="_blank">Mariano Poulsen</a> - Diseñador UI/UX
 
 <a href="https://www.linkedin.com/in/blancoemanuel07/" target="_blank">Emanuel Blanco</a> - Desarrollador Front-End
-
-<a href="https://www.linkedin.com/in/emaenriquez" target="_blank">Emanuel Enriquez</a> - Desarrollador Front-End
 
 <a href="https://www.linkedin.com/in/enlace3/" target="_blank">José Imhoff</a> - Desarrollador Front-End
 
@@ -76,6 +74,8 @@ Este proyecto es una plataforma de comercio electrónico que facilita la compra 
 ## Enlaces del Proyecto
 
 <a href="https://github.com/No-Country-simulation/s18-24-t-node-react" target="_blank">Repositorio en GitHub</a>
+
+<a href="https://inmobapp2024.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog" target="_blank">Espacio de trabajo en Jira</a>
 
 <a href="https://www.sitio.com" target="_blank">Sitio Web en Producción</a>
 

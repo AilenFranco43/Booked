@@ -1,89 +1,203 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { CreatePropertyDto } from './dto/create-property.dto';
 import { UpdatePropertyDto } from './dto/update-property.dto';
 import { Property } from './entities/property.entity';
 import { PropertyParamsDto } from './dto/property-params.dto';
+import { User } from 'src/users/entities/user.entity';
+import { Review } from 'src/review/entities/review.entity';
 
 @Injectable()
 export class PropertyService {
   constructor(
     @InjectModel(Property.name) private propertyModel: Model<Property>,
+    @InjectModel(Review.name) private reviewModel: Model<Review>,
   ) {}
 
-  async create(createPropertyDto: CreatePropertyDto): Promise<Property> {
-    const { title, description, price, max_people, tags, photos } =
-      createPropertyDto;
-
+  async create(createPropertyDto: CreatePropertyDto, user: User): Promise<Property> {
     const newProperty = new this.propertyModel({
-      title,
-      description,
-      price,
-      photos,
-      max_people,
-      tags,
+      ...createPropertyDto,
+      userId: user._id, // Asegúrate de usar user._id si es un Document
     });
-
     return newProperty.save();
   }
 
   async findAll(params: PropertyParamsDto) {
-    const { title, price, tags, orderBy } = params;
-
-    // Inicializar el filtro vacío
-    const filters: any = {};
-
-    // Agregar filtros solo si existen los parámetros
-    if (title) {
-      filters.title = { $regex: title, $options: 'i' }; // Búsqueda insensible a mayúsculas/minúsculas
-    }
-
-    if (price) {
-      filters.price = { $gte: price }; // Usar operador $gte para mayor o igual
-    }
-
-    if (tags && tags.length > 0) {
-      filters.tags = { $in: tags }; // Buscar propiedades que tengan todos los tags
-    }
-
-    // Construir la consulta
+    const filters = this.buildFilters(params);
     let query = this.propertyModel.find(filters);
 
-    // Si se incluye `orderBy`, aplicamos ordenamiento
-    if (orderBy) {
-      const sortOrder = orderBy === 'ASC' ? 1 : -1; // Conversión manual
-      query = query.sort({ createdAt: sortOrder });
+    if (params.orderBy) {
+      const sortOrder = params.orderBy === 'ASC' ? 1 : -1;
+      query = query.sort({ price: sortOrder });
+    } else {
+      query = query.sort({ createdAt: -1 });
     }
 
-    return await query.exec(); // Ejecutar la consulta con exec()
+    if (params.limit) {
+      query = query.limit(params.limit);
+    }
+
+    return await query.exec();
   }
 
-  async update(
-    id: string,
-    updatePropertyDto: UpdatePropertyDto,
-  ): Promise<Property> {
+  async findAllWithAverageRating(params: PropertyParamsDto) {
+    const { sortByRating, limit, ...filterParams } = params;
+    const pipeline: PipelineStage[] = [
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'property',
+          as: 'reviews'
+        }
+      },
+      {
+        $addFields: {
+          averageRating: {
+            $cond: [
+              { $gt: [{ $size: '$reviews' }, 0] },
+              { $avg: '$reviews.rating' },
+              0
+            ]
+          },
+          reviewCount: { $size: '$reviews' }
+        }
+      },
+      {
+        $match: this.buildFilters(filterParams)
+      }
+    ];
+
+    if (sortByRating) {
+      pipeline.push({
+        $sort: {
+          averageRating: sortByRating === 'desc' ? -1 : 1,
+          reviewCount: -1
+        }
+      });
+    } else {
+      pipeline.push({ $sort: { createdAt: -1 } });
+    }
+
+    if (limit) {
+      pipeline.push({ $limit: limit });
+    }
+
+    return this.propertyModel.aggregate(pipeline).exec();
+  }
+
+  async debugRatingTest() {
+    const testPipeline: PipelineStage[] = [
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: '_id',
+          foreignField: 'property',
+          as: 'reviews'
+        }
+      },
+      {
+        $addFields: {
+          averageRating: { $avg: '$reviews.rating' },
+          reviewCount: { $size: '$reviews' }
+        }
+      },
+      {
+        $sort: {
+          averageRating: -1,
+          reviewCount: -1
+        }
+      },
+      { $limit: 5 },
+      {
+        $project: {
+          title: 1,
+          averageRating: 1,
+          reviewCount: 1,
+          hasReviews: { $gt: [{ $size: '$reviews' }, 0] }
+        }
+      }
+    ];
+
+    return this.propertyModel.aggregate(testPipeline).exec();
+  }
+
+  private buildFilters(params: Omit<PropertyParamsDto, 'sortByRating' | 'limit'>): any {
+    const filters: any = {};
+
+    if (params.title) {
+      filters.title = { $regex: params.title, $options: 'i' };
+    }
+
+    if (params.min_people !== undefined) {
+      filters.max_people = { $gte: params.min_people };
+    }
+
+    if (params.minPrice !== undefined || params.maxPrice !== undefined) {
+      filters.price = {};
+      if (params.minPrice !== undefined) {
+        filters.price.$gte = params.minPrice;
+      }
+      if (params.maxPrice !== undefined) {
+        filters.price.$lte = params.maxPrice;
+      }
+    }
+
+    if (params.tags) {
+      const tagsArray = Array.isArray(params.tags) ? params.tags : [params.tags];
+      if (tagsArray.length > 0) {
+        filters.tags = { $in: tagsArray };
+      }
+    }
+
+    if (params.address) {
+      filters.address = { $regex: params.address, $options: 'i' };
+    }
+
+    return filters;
+  }
+
+  async findAllByUserId(userId: string) {
+    const objectUserId = new Types.ObjectId(userId);
+    const properties = await this.propertyModel.find({ userId: objectUserId }).exec();
+    if (!properties || properties.length === 0) {
+      throw new NotFoundException(`No properties found for user with ID ${userId}`);
+    }
+    return properties;
+  }
+
+  async update(id: string, updatePropertyDto: UpdatePropertyDto): Promise<Property> {
     await this.findOneById(id);
-
-    const updatedProperty = this.propertyModel.findByIdAndUpdate(
-      id,
-      updatePropertyDto,
-      { new: true },
-    );
-
-    return updatedProperty;
+    return this.propertyModel.findByIdAndUpdate(id, updatePropertyDto, { new: true }).exec();
   }
 
-  async remove(id: number): Promise<Property> {
+  async remove(id: string): Promise<Property> {
     return this.propertyModel.findByIdAndDelete(id).exec();
   }
 
   async findOneById(propertyId: string): Promise<Property> {
     const property = await this.propertyModel.findById(propertyId);
-
-    if (!property)
+    if (!property) {
       throw new NotFoundException(`Property with id ${propertyId} not found`);
-
+    }
     return property;
+  }
+
+  async getUniqueCities(): Promise<string[]> {
+    const properties = await this.propertyModel.find({}).exec();
+    const cities = new Set<string>();
+
+    properties.forEach(property => {
+      const addressParts = property.address?.split(',') || [];
+      if (addressParts.length >= 3) {
+        const city = addressParts[addressParts.length - 2].trim();
+        if (city && !city.includes('Ciudad no disponible')) {
+          cities.add(city);
+        }
+      }
+    });
+
+    return Array.from(cities).sort();
   }
 }

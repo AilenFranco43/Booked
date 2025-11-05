@@ -6,6 +6,12 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PropertyModule } from './property/property.module';
 import { ReservationsModule } from './reservations/reservations.module';
+import { ReviewModule } from './review/review.module';
+import { AuthModule } from './auth/auth.module';
+
+
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
+
 
 @Module({
   imports: [
@@ -14,6 +20,10 @@ import { ReservationsModule } from './reservations/reservations.module';
     UsersModule,
     PropertyModule,
     ReservationsModule,
+    ReviewModule,
+    AuthModule,
+
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

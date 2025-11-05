@@ -1,12 +1,12 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-/*import { Property } from './property.model';
+import { Property } from '../../property/entities/property.entity';
+/*
 import { Booking } from './booking.model';
-import { Review } from './review.model';*/
-
+import { Review } from './review.model';
+*/
 @Schema({ timestamps: true })
 export class User extends Document {
-  
   @Prop({ required: true })
   name: string;
 
@@ -24,10 +24,13 @@ export class User extends Document {
 
   @Prop({ required: true })
   nationality: string;
-  /*
+
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Property' }] })
   properties: Property[];
 
+  @Prop()
+  avatar: string;
+  /*
   @Prop({ type: [{ type: Types.ObjectId, ref: 'Booking' }] })
   bookings: Booking[];
 
@@ -37,4 +40,3 @@ export class User extends Document {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-

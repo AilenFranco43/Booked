@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsNumber,
-  IsArray,
-  IsOptional,
-  IsIn,
-} from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, IsIn, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -19,14 +13,15 @@ export class PropertyParamsDto {
   @IsString()
   title: string;
 
-  @ApiPropertyOptional({
-    example: 100,
-    description: 'Max price of property to search',
-  })
   @Type(() => Number)
   @IsOptional()
   @IsNumber()
-  price: number;
+  minPrice: number;
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  maxPrice: number;
 
   @ApiPropertyOptional({
     example: ['wifi', 'pool'],
@@ -45,4 +40,37 @@ export class PropertyParamsDto {
   @IsIn(['ASC', 'DES'])
   @IsOptional()
   orderBy: Orders;
+
+  @ApiPropertyOptional({
+    example: '5886, Soler, Palermo Hollywood, Buenos Aires, Argentina',
+    description: 'The address must be detailed',
+  })
+  @IsOptional()
+  @IsString()
+  address: string;
+
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  min_people: number;
+
+  @ApiPropertyOptional({
+    example: 'desc',
+    description: 'Sort by average rating (asc or desc)',
+    enum: ['asc', 'desc'],
+  })
+  @IsOptional()
+  @IsIn(['asc', 'desc'])
+  sortByRating?: 'asc' | 'desc';
+
+  @ApiPropertyOptional({
+    example: 4,
+    description: 'Limit the number of results returned',
+    type: Number
+  })
+  @Type(() => Number)
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  limit?: number;
 }

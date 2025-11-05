@@ -1,18 +1,19 @@
 import {
-  Injectable,
   BadRequestException,
-  UnauthorizedException,
+  Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcrypt';
+import { compare } from 'bcrypt';
 import { Model } from 'mongoose';
-import { User } from './entities/user.entity';
+import { LoginUserDto } from './dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import * as bcrypt from 'bcrypt';
-import { JwtService } from '@nestjs/jwt';
-import { compare } from 'bcrypt';
-import { LoginUserDto } from './dto';
+import { User } from './entities/user.entity';
+
 @Injectable()
 export class UsersService {
   constructor(
@@ -20,8 +21,10 @@ export class UsersService {
     private jwtService: JwtService,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<User> {
-    const { name, email, password, mobileNumber, birthDate, nationality } =
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<{ user: User; token: string }> {
+    const { name, email, password, mobileNumber, birthDate, nationality, avatar } =
       createUserDto;
     const emailToLowerCase = email.toLowerCase();
     const existingUser = await this.userModel.findOne({
@@ -33,16 +36,22 @@ export class UsersService {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newUser = new this.userModel({
+    const newUser = await this.userModel.create({
       name,
       email: emailToLowerCase,
       password: hashedPassword,
       mobileNumber,
       birthDate,
       nationality,
+      avatar,
     });
 
-    return newUser.save();
+    const token = this.generateJwt({ id: newUser.id });
+
+    return {
+      user: newUser,
+      token,
+    };
   }
 
   async findOneByEmail(email: string) {
@@ -87,11 +96,13 @@ export class UsersService {
 
     return {
       user: {
+        id: user.id,
         name: user.name,
         email: user.email,
         mobileNumber: user.mobileNumber,
         birthDate: user.birthDate,
         nationality: user.nationality,
+        avatar: user.avatar,
       },
       token,
     };
