@@ -1,6 +1,5 @@
 'use client'
-
-import { useState } from "react"
+import { useState, useCallback } from "react";
 const API = process.env.NEXT_PUBLIC_API_URL;
 
 
@@ -22,48 +21,39 @@ const normalizeProperty = (property) => ({
 });
 
 export const useProperties = () => {
-  const [properties, setProperties] = useState([])
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const [properties, setProperties] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-const getProperties = async (inputQueryParams = {}) => {
+  const getProperties = useCallback(async (inputQueryParams = {}) => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const queryParams = new URLSearchParams();
-      
-      // Clonar parámetros para no modificar el original
       const params = { ...inputQueryParams };
-      
-      // Convertir orderBy a sortByRating si es necesario
+
       if (params.orderBy && !params.sortByRating) {
-        params.sortByRating = params.orderBy === 'ASC' ? 'asc' : 'desc';
+        params.sortByRating = params.orderBy === "ASC" ? "asc" : "desc";
         delete params.orderBy;
       }
 
-      // Agregar parámetros válidos
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
+        if (value !== undefined && value !== null && value !== "") {
           queryParams.append(key, value.toString());
         }
       });
 
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const response = await fetch(`${API}/property?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
 
       const data = await response.json();
-      
-      // Normalizar todas las propiedades
-      const normalizedProperties = Array.isArray(data) 
+
+      const normalizedProperties = Array.isArray(data)
         ? data.map(normalizeProperty)
         : [normalizeProperty(data)];
 
@@ -76,64 +66,52 @@ const getProperties = async (inputQueryParams = {}) => {
     } finally {
       setIsLoading(false);
     }
-  };
-  const getUserProperties = async () => {
-    setIsLoading(true)
-    setError(null)
-    
-    try {
-      const token = localStorage.getItem('token')
-      if (!token) throw new Error('No authentication token found')
-      
-      const response = await fetch(`${API}/property/user/properties`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-  
-      console.log("Response status:", response.status)
-      
-      //  si es 404, devuelve lista vacía
-      if (response.status === 404) {
-        setProperties([])  // El usuario simplemente no tiene propiedades
-        return []
-      }
-  
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`)
-      }
-  
-      const data = await response.json()
-      setProperties(data || [])
-      return data
-    } catch (err) {
-      console.error("Error in getUserProperties:", err)
-      setError(err.message)
-      setProperties([])  // Asegura que el componente no se rompa
-      // ⚠️ NO hace falta `throw err` si ya estás manejando el error en el componente
-    } finally {
-      setIsLoading(false)
-    }
-  }
-  
-  const deleteProperty = async (propertyId) => {
+  }, []); // ✅ No depende de nada externo
+
+  const getUserProperties = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API}/property/delete/${propertyId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await fetch(`${API}/property/user/properties`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-  
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+
+      if (response.status === 404) {
+        setProperties([]);
+        return [];
       }
-  
-      // Actualiza la lista de propiedades después de eliminar
+
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+
+      const data = await response.json();
+      setProperties(data || []);
+      return data;
+    } catch (err) {
+      console.error("Error in getUserProperties:", err);
+      setError(err.message);
+      setProperties([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []); // ✅ idem
+
+  const deleteProperty = useCallback(async (propertyId) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API}/property/delete/${propertyId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+
       await getUserProperties();
       return true;
     } catch (err) {
@@ -142,48 +120,42 @@ const getProperties = async (inputQueryParams = {}) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getUserProperties]); // ✅ depende de la función anterior
 
-  const getPropertyById = async (id) => {
+  const getPropertyById = useCallback(async (id) => {
     try {
-      const response = await fetch(`${API}/property/${id}`)
+      const response = await fetch(`${API}/property/${id}`);
+      if (!response.ok || response.status !== 200)
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
 
-      if (!response.ok || response.status !== 200) throw new Error(`Error ${response.status}: ${response.statusText}`)
-
-      const propertyData = await response.json()
-      return propertyData
+      const propertyData = await response.json();
+      return propertyData;
     } catch (error) {
-      throw error
+      throw error;
     }
-  }
+  }, []);
 
-// useProperties hook
-const getUniqueCities = async () => {
-  setIsLoading(true);
-  setError(null);
-  
-  try {
-    const token = localStorage.getItem('token');
-    const response = await fetch(`${API}/property/cities/unique`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+  const getUniqueCities = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
 
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API}/property/cities/unique`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error(`Error ${response.status}: ${response.statusText}`);
+
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-
-    const data = await response.json();
-    return data;
-  } catch (err) {
-    setError(err.message);
-    throw err;
-  } finally {
-    setIsLoading(false);
-  }
-}
-
+  }, []);
 
   return {
     getUniqueCities,
@@ -193,6 +165,6 @@ const getUniqueCities = async () => {
     getPropertyById,
     properties,
     isLoading,
-    error
-  }
-}
+    error,
+  };
+};

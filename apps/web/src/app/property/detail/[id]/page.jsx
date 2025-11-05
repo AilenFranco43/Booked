@@ -25,7 +25,6 @@ import { countDaysBetweenDates } from "@/utils/dateHelpers";
 
 // API
 import {
-  paymentStripe,
   getUserById,
   getReviewsByProperty,
   deleteReview,
@@ -64,7 +63,7 @@ const PropertyDetail = () => {
       .then((data) => setCurrentProperty(data))
       .catch((error) => router.push("/"))
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [getPropertyById, params?.id, router]);
 
   useEffect(() => {
     if (currentProperty.userId) {
@@ -661,7 +660,7 @@ const PropertyDetail = () => {
           </button>
 
           <div className="relative max-w-6xl w-full max-h-[90vh] flex items-center justify-center">
-            <img
+            <Image
               src={selectedImage}
               alt="Enlarged view"
               className="max-w-full max-h-[90vh] object-contain"

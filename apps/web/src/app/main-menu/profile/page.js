@@ -16,8 +16,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
-  handleImageUpload,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Title } from "@/components/title-menu";

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { uploadImage } from "@/lib/cloudinaryService";
+import Image from "next/image";
 
 export const ImageUploader = ({
   value,
@@ -96,7 +97,7 @@ export const ImageUploader = ({
           <div className="grid grid-cols-3 gap-2 mt-2">
             {value.map((url, index) => (
               <div key={index} className="relative">
-                <img
+                <Image
                   src={url}
                   alt={`Preview ${index}`}
                   className="w-full h-24 object-cover rounded"

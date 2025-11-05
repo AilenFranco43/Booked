@@ -36,7 +36,7 @@ export const Dropdown = ({
     };
     
     fetchAndGroupCities();
-  }, []);
+  }, [getUniqueCities]);
 
   const handleCitySelect = (city) => {
     setDestination(city);

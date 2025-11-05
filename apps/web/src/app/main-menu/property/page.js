@@ -1,4 +1,5 @@
 'use client'
+
 import { Title } from "@/components/title-menu"
 import { Button } from "@/components/ui/button"
 import { School } from "lucide-react"
@@ -21,18 +22,19 @@ export default function Property() {
   const [show, setShow] = useState(false)
   const { properties, isLoading, error, getUserProperties, deleteProperty } = useProperties()
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        console.log("Fetching user properties...")
-        await getUserProperties()
-      } catch (err) {
-        console.error("Failed to fetch properties:", err)
-      }
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      console.log("Fetching user properties...");
+      await getUserProperties();
+    } catch (err) {
+      console.error("Failed to fetch properties:", err);
     }
+  };
 
-    fetchData()
-  }, []) // Vacío porque no depende de props/state
+  fetchData();
+}, [getUserProperties]);
+
 
   const handleAddProperty = (e) => {
     e.preventDefault()

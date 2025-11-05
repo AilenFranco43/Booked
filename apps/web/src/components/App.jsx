@@ -1,3 +1,5 @@
+import { Header } from "@/ui/Header"
+
 export const App = () => {
   return (
     <>

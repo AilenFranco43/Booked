@@ -106,7 +106,7 @@ const Page = () => {
       sortByRating: "desc",
       limit: 4,
     });
-  }, []);
+  }, [getProperties]);
 
   const destinationsWithCount = useMemo(() => {
     const countByCity = {};
