@@ -1,3 +1,5 @@
+'use client'
+
 import { checkToken, loginUser } from "@/services/auth.service"
 import { useBoundStore } from "@/store/bound.store"
 
