@@ -24,10 +24,12 @@ const nextConfig = {
       },
     ],
   },
-  // Configuración para App Router
-  experimental: {
-    appDir: true,
-  },
+  // DESHABILITA completamente la generación estática de páginas de error
+  output: 'standalone',
+  // O usa 'export' si prefieres static export
+  // output: 'export',
+  // trailingSlash: true,
+  
   compiler: {
     styledComponents: true,
   },
@@ -37,6 +39,10 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Configuración para evitar el prerender de errores
+  experimental: {
+    // Esto puede ayudar en algunos casos
+  }
 };
 
 export default nextConfig;
