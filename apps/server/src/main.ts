@@ -19,8 +19,8 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.enableCors({
-    // origin: ['https://bookedfrontend.vercel.app', 'http://localhost:3000'],
-    origin: true,
+    origin: ['https://booked-web.vercel.app', 'http://localhost:3000'],
+    // origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
   });
